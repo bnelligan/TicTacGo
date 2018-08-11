@@ -2016,7 +2016,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 814304072}
+      - m_Target: {fileID: 0}
         m_MethodName: LaunchRoom
         m_Mode: 1
         m_Arguments:
@@ -2139,7 +2139,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 814304072}
+      - m_Target: {fileID: 0}
         m_MethodName: ApplyUserIdAndConnect
         m_Mode: 1
         m_Arguments:
@@ -2560,7 +2560,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 814304072}
+      - m_Target: {fileID: 0}
         m_MethodName: Quit
         m_Mode: 1
         m_Arguments:

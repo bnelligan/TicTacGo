@@ -37,7 +37,4 @@ MonoBehaviour:
   - RequestForPickupItems
   - RequestForPickupTimes
   - RPC_StartGame
-  - RPC_GameOver
-  - RPC_MakeMove
-  - RPC_SwitchTurns
   DisableAutoOpenWizard: 1
