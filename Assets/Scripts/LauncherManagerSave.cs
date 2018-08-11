@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using ExitGames.Client.Photon;
 
-public class LauncherManager : PunBehaviour
+public class LauncherManagerSave : PunBehaviour
 {
     public InputField InputField;
     public string UserId;
@@ -86,7 +86,7 @@ public class LauncherManager : PunBehaviour
     {
         Debug.Log("OnPhotonRandomJoinFailed");
 
-        RoomOptions roomOptions = new RoomOptions();     
+        RoomOptions roomOptions = new RoomOptions();
         roomOptions.CustomRoomProperties = new Hashtable() { { "mapSize", 3 } };
         roomOptions.MaxPlayers = 2;
         roomOptions.PlayerTtl = 20000;
