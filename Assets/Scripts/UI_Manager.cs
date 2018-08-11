@@ -63,6 +63,7 @@ public class UI_Manager : MonoBehaviour
             _p2Token = value;
         }
     }
+
     private void Awake()
     {
         // Get components
@@ -70,6 +71,7 @@ public class UI_Manager : MonoBehaviour
         _p1ScrollSelect = P1Select.GetComponent<ScrollRect>();
         _p2ScrollSelect = P2Select.GetComponent<ScrollRect>();
     }
+
     // Use this for initialization
     void Start()
     { 
@@ -87,6 +89,7 @@ public class UI_Manager : MonoBehaviour
         // Populate token select with tokens
         Vector2 itemPos = Vector2.zero;
         Vector2 dx = new Vector2(0, - (tokenWidth + tokenPadding));
+
         foreach(Sprite token in TokenSprites)
         {
             itemPos += dx;
@@ -115,20 +118,19 @@ public class UI_Manager : MonoBehaviour
         // Enable the correct canvas
         GoToGameUI();
     }
+
     public void OnClick_Restart()
     {
         manager.GameBoard.AnimateBoard = true;
         manager.ResetGame();
     }
+
     public void OnClick_Menu()
     {
         manager.EndGame();
         GoToMainMenu();
     }
-    public void OnClick_Quit()
-    {
-        Application.Quit();
-    }
+
     
     #endregion
 
