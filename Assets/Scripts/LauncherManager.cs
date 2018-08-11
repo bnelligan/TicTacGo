@@ -18,7 +18,6 @@ public class LauncherManager : PunBehaviour
 
     Hashtable _defaultRoomProperties = new Hashtable
     {
-        { "CurrentPlayer", Player.P1 },
         { "BoardSize", 3 }
     };
 
