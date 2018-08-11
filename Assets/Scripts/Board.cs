@@ -29,7 +29,6 @@ public class Board : MonoBehaviour {
 
     // Directional vectors
     List<Vector2> directions = new List<Vector2> {
-        new Vector2(1,0),
         new Vector2(1,1),
         new Vector2(0,1),
         new Vector2(-1,1),
@@ -70,13 +69,13 @@ public class Board : MonoBehaviour {
             }
         }
         if (AnimateBoard == true)
-            StartCoroutine(BuildBoard());
+            StartCoroutine(BuildBoardSpiral());
     }
 
     /// <summary>
     /// Build the board in a spiral pattern
     /// </summary>
-    public IEnumerator BuildBoard()
+    public IEnumerator BuildBoardSpiral()
     {
         GameManager manager = FindObjectOfType<GameManager>();
         manager.UI.ShowMessage("Building board...");
@@ -166,8 +165,6 @@ public class Board : MonoBehaviour {
         manager.UI.SetTurnText(Player.P1);
     }
 
-
-
     void TurnLeft(ref Direction start)
     {
         switch(start)
@@ -187,7 +184,6 @@ public class Board : MonoBehaviour {
         }
             
     }
-
 
     public void DestroyBoard()
     {
@@ -235,11 +231,7 @@ public class Board : MonoBehaviour {
             return true;
         }
     }
-    /// <summary>
-    /// Places or replaces a token at the target tile
-    /// </summary>
-    /// <param name="target"></param>
-    /// <param name="player"></param>
+
     private void PlaceToken(Tile target, Player player)
     {
         // Destroy any tokens on that tile
@@ -260,11 +252,6 @@ public class Board : MonoBehaviour {
         target.State = (TileState)player;
     }
     
-    /// <summary>
-    /// Check if a player has won
-    /// </summary>
-    /// <param name="winner">Output variable of the winner</param>
-    /// <returns>True if there is a winner, and an output of which player won</returns>
     public bool CheckWin(out Player winner, out List<Tile> winningTiles)
     {
         // Winner must be set because it is output. It is not used if this returns false
@@ -410,11 +397,7 @@ public class Board : MonoBehaviour {
         // If we get here, there is no winner
         return false;
     }
-
-    /// <summary>
-    /// Check if the board is full
-    /// </summary>
-    /// <returns></returns>
+    
     public bool CheckFull()
     {
         bool full = true;
