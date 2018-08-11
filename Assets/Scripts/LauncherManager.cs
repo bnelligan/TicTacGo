@@ -3,6 +3,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+using ExitGames.Client.Photon;
+
 public class LauncherManager : PunBehaviour
 {
     public InputField InputField;
@@ -14,6 +16,13 @@ public class LauncherManager : PunBehaviour
     private const string MainSceneName = "TicTacGo";
     const string NickNamePlayerPrefsKey = "NickName";
 
+    Hashtable _defaultRoomProperties = new Hashtable
+    {
+        { "CurrentPlayer", Player.P1 },
+        { "BoardSize", 3 }
+    };
+
+    
     void Start()
     {
         InputField.text = PlayerPrefs.HasKey(NickNamePlayerPrefsKey) ? PlayerPrefs.GetString(NickNamePlayerPrefsKey) : "";
@@ -88,7 +97,7 @@ public class LauncherManager : PunBehaviour
     public override void OnPhotonRandomJoinFailed(object[] codeAndMsg)
     {
         Debug.Log("OnPhotonRandomJoinFailed");
-        PhotonNetwork.CreateRoom(null, new RoomOptions() { MaxPlayers = 2, PlayerTtl = 20000 }, null);
+        PhotonNetwork.CreateRoom(null, new RoomOptions() { MaxPlayers = 2, PlayerTtl = 20000}, null);
     }
 
     public override void OnJoinedRoom()
@@ -96,6 +105,8 @@ public class LauncherManager : PunBehaviour
         Debug.Log("Joined room: " + PhotonNetwork.room.Name);
         this.previousRoom = PhotonNetwork.room.Name;
         PlayerPrefs.SetString(previousRoomPlayerPrefKey, this.previousRoom);
+        if(PhotonNetwork.isMasterClient)
+            PhotonNetwork.room.SetCustomProperties(_defaultRoomProperties);
     }
 
     public override void OnPhotonJoinRoomFailed(object[] codeAndMsg)

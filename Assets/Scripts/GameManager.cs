@@ -5,7 +5,7 @@ using Photon;
 
 public enum Player { P1, P2 };
 public class GameManager : PunBehaviour {
-     
+    
     // Private vars
     int turn;
     Player activePlayer = Player.P1;
@@ -23,8 +23,6 @@ public class GameManager : PunBehaviour {
     // External refs
     Board board;
     UI_Manager ui;
-
-    
 
 	// Use this for initialization
 	void Start () {
