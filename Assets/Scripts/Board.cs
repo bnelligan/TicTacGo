@@ -74,12 +74,13 @@ public class Board : MonoBehaviour {
             }
         }
         if (AnimateBoard == true)
-            StartCoroutine(BuildBoard());
+            StartCoroutine(BuildBoardSpiral());
     }
 
     /// <summary>
     /// Build the board in a spiral pattern
     /// </summary>
+    public IEnumerator BuildBoardSpiral()
     public IEnumerator BuildBoard()
     {
         GameManager manager = FindObjectOfType<GameManager>();
