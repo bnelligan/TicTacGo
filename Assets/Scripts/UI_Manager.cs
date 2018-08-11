@@ -140,7 +140,7 @@ public class UI_Manager : MonoBehaviour
     /// Set the text display showing the current player
     /// </summary>
     /// <param name="player">Current player</param>
-    public void SetTurn(Player player)
+    public void SetTurnText(Player player)
     {
         if (player == Player.P1)
         {
