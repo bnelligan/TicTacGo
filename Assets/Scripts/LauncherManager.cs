@@ -93,17 +93,14 @@ public class LauncherManager : PunBehaviour
     public override void OnPhotonRandomJoinFailed(object[] codeAndMsg)
     {
         Debug.Log("OnPhotonRandomJoinFailed");
-<<<<<<< HEAD
+
 
         RoomOptions roomOptions = new RoomOptions();     
-        roomOptions.CustomRoomProperties = new Hashtable() { { "mapSize", 3 } };
+        roomOptions.CustomRoomProperties = _defaultRoomProperties;
         roomOptions.MaxPlayers = 2;
         roomOptions.PlayerTtl = 20000;
 
         PhotonNetwork.CreateRoom(null, roomOptions, null);
-=======
-        PhotonNetwork.CreateRoom(null, new RoomOptions() { MaxPlayers = 2, PlayerTtl = 20000}, null);
->>>>>>> 468957a470108fbe56554726e69acaa8bd75bdd2
     }
 
     public override void OnJoinedRoom()
@@ -111,7 +108,6 @@ public class LauncherManager : PunBehaviour
         Debug.Log("Joined room: " + PhotonNetwork.room.Name);
         this.previousRoom = PhotonNetwork.room.Name;
         PlayerPrefs.SetString(previousRoomPlayerPrefKey, this.previousRoom);
-<<<<<<< HEAD
 
         if (!PhotonNetwork.isMasterClient)
         {
@@ -119,10 +115,6 @@ public class LauncherManager : PunBehaviour
         }
         Debug.Log("PhotonNetwork : Loading Level : " + "TikTakGo");
         PhotonNetwork.LoadLevel("TicTacGo");
-=======
-        if(PhotonNetwork.isMasterClient)
-            PhotonNetwork.room.SetCustomProperties(_defaultRoomProperties);
->>>>>>> 468957a470108fbe56554726e69acaa8bd75bdd2
     }
 
     public override void OnPhotonJoinRoomFailed(object[] codeAndMsg)
