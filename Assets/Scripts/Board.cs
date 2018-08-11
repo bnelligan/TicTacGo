@@ -163,7 +163,7 @@ public class Board : MonoBehaviour {
             }
         }
         manager.InputEnabled = true;
-        manager.UI.SetTurn(Player.P1);
+        manager.UI.SetTurnText(Player.P1);
     }
 
 

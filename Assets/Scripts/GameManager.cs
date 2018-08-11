@@ -1,17 +1,16 @@
-﻿/* Brendan Nelligan
- * May 2018
- */
-
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Photon;
 
 public enum Player { P1, P2 };
-public class GameManager : MonoBehaviour {
+public class GameManager : PunBehaviour {
      
     // Private vars
-    int turn; 
-    Player activePlayer = Player.P1; 
+    int turn;
+    Player activePlayer = Player.P1;
+    Player localPlayer = Player.P1;
+
     // Config
     public bool InputEnabled = false;
     public bool GameRunning = false;
@@ -45,6 +44,14 @@ public class GameManager : MonoBehaviour {
             Application.Quit();
         }
 	}
+
+    private void SetLocalPlayer()
+    {
+        if (PhotonNetwork.isMasterClient)
+            localPlayer = Player.P1;
+        else
+            localPlayer = Player.P2;
+    }
     private void HandleInput()
     {
         if(Input.GetMouseButtonDown(0))
@@ -60,11 +67,18 @@ public class GameManager : MonoBehaviour {
             }            
         }
     }
-    /// <summary>
-    /// Make a move on the tile
-    /// </summary>
-    /// <param name="tile"></param>
-    /// <param name="player"></param>
+    public IEnumerator IE_StartWhenPlayersJoin()
+    {
+        while (PhotonNetwork.playerList.Length < 2)
+        {
+            yield return new WaitForEndOfFrame();
+        }
+        if (PhotonNetwork.isMasterClient)
+        {
+            photonView.RPC("RPC_StartGame", PhotonTargets.All);
+        }
+    }
+    
     public void MakeMove(Tile tile, Player player)
     {
         //Debug.Log("Tile clicked: " + tile.name);
@@ -142,9 +156,13 @@ public class GameManager : MonoBehaviour {
             activePlayer = Player.P1;
         }
         // Update the UI
-        ui.SetTurn(activePlayer);
+        ui.SetTurnText(activePlayer);
     }
 
+    [PunRPC] public void RPC_StartGame()
+    {
+        StartGame();
+    }
     public void StartGame()
     {
         if (MoveHistory != null) MoveHistory.Clear();
@@ -156,10 +174,9 @@ public class GameManager : MonoBehaviour {
         GameRunning = true;
         InputEnabled = true;
         activePlayer = Player.P1;
-        ui.SetTurn(activePlayer);
+        ui.SetTurnText(activePlayer);
         ui.GoToGameUI();
         board.CreateBoard(boardSize);
-        
     }
     public void StartGame(int size)
     {
@@ -190,7 +207,7 @@ public class GameManager : MonoBehaviour {
         board.DestroyBoard();
     }
     public void ResetGame()
-    {
+    {   
         EndGame();
         StartGame();
     }
