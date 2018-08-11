@@ -30,7 +30,5 @@ public class Tile : MonoBehaviour {
             transform.GetChild(0).GetComponent<SpriteRenderer>().color = tokenColor;
             Debug.LogWarning("COLOR CHANGED");
         }
-        
-
     }
 }

@@ -5,7 +5,7 @@ using Photon;
 
 public enum Player { P1, P2 };
 public class GameManager : PunBehaviour {
-     
+
     // Private vars
     int turn;
     Player activePlayer = Player.P1;
@@ -20,17 +20,17 @@ public class GameManager : PunBehaviour {
     // Access properties
     public Board GameBoard { get { return board; } }
     public UI_Manager UI { get { return ui; } } 
+    public Player CurrentPlayer { get { return activePlayer; } }
     // External refs
     Board board;
     UI_Manager ui;
-
-    
 
 	// Use this for initialization
 	void Start () {
         ui = GetComponent<UI_Manager>();
         board = FindObjectOfType<Board>();
         MoveHistory = new List<Move>();
+        SetLocalPlayer();
 	}
 	
 	// Update is called once per frame
@@ -62,7 +62,10 @@ public class GameManager : PunBehaviour {
                 Tile hitTile = hit.collider.GetComponent<Tile>();
                 if(hitTile)
                 {
-                    MakeMove(hitTile, activePlayer);
+                    if(IsMyTurn())
+                    {
+                        photonView.RPC("RPC_MakeMove", PhotonTargets.AllBuffered, hitTile.X, hitTile.Y, activePlayer);
+                    }
                 }
             }            
         }
@@ -75,10 +78,14 @@ public class GameManager : PunBehaviour {
         }
         if (PhotonNetwork.isMasterClient)
         {
-            photonView.RPC("RPC_StartGame", PhotonTargets.All);
+            photonView.RPC("RPC_StartGame", PhotonTargets.AllBuffered);
         }
     }
-    
+
+    [PunRPC] void RPC_MakeMove(int x, int y, Player player)
+    {
+        MakeMove(x, y, player);
+    }
     public void MakeMove(Tile tile, Player player)
     {
         //Debug.Log("Tile clicked: " + tile.name);
@@ -99,6 +106,11 @@ public class GameManager : PunBehaviour {
                 List<Tile> winningTiles;
                 if(board.CheckWin(out winner, out winningTiles))
                 {
+                    int[,] winningTilesCoords = GetTileCoords(winningTiles);
+                    if(PhotonNetwork.isMasterClient)
+                    {
+                        photonView.RPC("RPC_GameOver", PhotonTargets.All, winner, false, winningTilesCoords);
+                    }
                     GameOver(winner, false);
                     ui.HighlightTiles(winningTiles);
                 }
@@ -128,7 +140,6 @@ public class GameManager : PunBehaviour {
     {
         MakeMove(move.tile, move.player);
     }
-
     public void MakeDelayedMoves(List<Move> moves)
     {
         StartCoroutine(IE_MakeDelayedMoves(moves));
@@ -142,6 +153,11 @@ public class GameManager : PunBehaviour {
             MakeMove(moves[m]);
         }
         InputEnabled = true;
+    }
+
+    [PunRPC] void RPC_SwitchTurns(Player lastPlayer)
+    {
+        SwitchTurns(lastPlayer);
     }
     private void SwitchTurns()
     {
@@ -158,8 +174,15 @@ public class GameManager : PunBehaviour {
         // Update the UI
         ui.SetTurnText(activePlayer);
     }
+    private void SwitchTurns(Player lastPlayer)
+    {
+        if (lastPlayer == Player.P1)
+            activePlayer = Player.P2;
+        else
+            activePlayer = Player.P1;
+    }
 
-    [PunRPC] public void RPC_StartGame()
+    [PunRPC] void RPC_StartGame()
     {
         StartGame();
     }
@@ -182,6 +205,11 @@ public class GameManager : PunBehaviour {
     {
         boardSize = size;
         StartGame();
+    }
+
+    [PunRPC] void RPC_GameOver(Player winner, bool tie, int[,] winningTiles)
+    {
+
     }
     public void GameOver(Player winner, bool tie)
     {
@@ -211,8 +239,21 @@ public class GameManager : PunBehaviour {
         EndGame();
         StartGame();
     }
-    
-    
+
+    private bool IsMyTurn()
+    {
+        return activePlayer == localPlayer;
+    }
+    private int[,] GetTileCoords(List<Tile> tiles)
+    {
+        int[,] tileCoords = new int[tiles.Count, 2];
+        for(int t = 0; t < tiles.Count; t++)
+        {
+            tileCoords[t, 0] = tiles[t].X;
+            tileCoords[t, 1] = tiles[t].Y;
+        }
+        return tileCoords;
+    }
 }
 
 public struct Move
