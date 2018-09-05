@@ -17,8 +17,8 @@ public class Board : MonoBehaviour {
     public bool AnimateBoard = true;
 
     // Tokens
-    GameObject p1Token;
-    GameObject p2Token;
+    [SerializeField] GameObject p1Token;
+    [SerializeField] GameObject p2Token;
 
     public Texture2D P1Texture { get { return p1Token.GetComponent<SpriteRenderer>().sprite.texture; } }
     public Texture2D P2Texture { get { return p2Token.GetComponent<SpriteRenderer>().sprite.texture; } }
@@ -79,7 +79,6 @@ public class Board : MonoBehaviour {
     public IEnumerator BuildBoardSpiral()
     {
         GameManager manager = FindObjectOfType<GameManager>();
-        manager.UI.ShowMessage("Building board...");
         manager.InputEnabled = false;
 
         Direction dir = Direction.RIGHT;
@@ -163,7 +162,6 @@ public class Board : MonoBehaviour {
             }
         }
         manager.InputEnabled = true;
-        manager.UI.SetTurnText(Player.P1);
     }
 
     void TurnLeft(ref Direction start)
@@ -460,5 +458,16 @@ public class Board : MonoBehaviour {
     {
         p1Token = p1;
         p2Token = p2;
+    }
+
+    public void HighlightTiles(List<Tile> tiles)
+    {
+        foreach (Tile t in board)
+        {
+            if (!tiles.Contains(t))
+            {
+                t.Dim();
+            }
+        }
     }
 }

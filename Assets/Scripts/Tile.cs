@@ -3,7 +3,6 @@
  * Fox Cub Interview
  */
 
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,6 +11,7 @@ public class Tile : MonoBehaviour {
 
     public int X;
     public int Y;
+    float originalAlpha;
     public float dimAlpha = 0.5f;
     public TileState State;
 
@@ -28,7 +28,24 @@ public class Tile : MonoBehaviour {
             Color tokenColor = transform.GetChild(0).GetComponent<SpriteRenderer>().color;
             tokenColor.a = dimAlpha;
             transform.GetChild(0).GetComponent<SpriteRenderer>().color = tokenColor;
-            Debug.LogWarning("COLOR CHANGED");
         }
+    }
+
+    public static int[,] GetCoordinates(List<Tile> tiles)
+    {
+        int[,] tileCoords = new int[tiles.Count, 2];
+        for (int t = 0; t < tiles.Count; t++)
+        {
+            tileCoords[t, 0] = tiles[t].X;
+            tileCoords[t, 1] = tiles[t].Y;
+        }
+        return tileCoords;
+    }
+    public static int[] GetCoordinates(Tile tile)
+    {
+        int[] coords = new int[2];
+        coords[0] = tile.X;
+        coords[1] = tile.Y;
+        return coords;
     }
 }

@@ -14,23 +14,27 @@ public class GameManager : PunBehaviour {
     // Config
     public bool InputEnabled = false;
     public bool GameRunning = false;
+    public bool IsOnline = false;
     public int boardSize = 3;
     public float moveDelay = 0.1f;
     public List<Move> MoveHistory; 
     // Access properties
     public Board GameBoard { get { return board; } }
-    public UI_Manager UI { get { return ui; } } 
+    public GameHUD UI { get { return HUD; } } 
     public Player CurrentPlayer { get { return activePlayer; } }
     // External refs
     Board board;
-    UI_Manager ui;
+    [SerializeField]
+    GameHUD HUD;
 
 	// Use this for initialization
 	void Start () {
-        ui = GetComponent<UI_Manager>();
+        if (HUD == null) HUD = GameObject.FindObjectOfType<GameHUD>();
         board = FindObjectOfType<Board>();
         MoveHistory = new List<Move>();
         SetLocalPlayer();
+        SetOnlineStatus();
+        StartCoroutine(IE_StartWhenPlayersJoin());    
 	}
 	
 	// Update is called once per frame
@@ -51,6 +55,12 @@ public class GameManager : PunBehaviour {
             localPlayer = Player.P1;
         else
             localPlayer = Player.P2;
+        Debug.Log("Set Local Player: " + localPlayer.ToString());
+    }
+    private void SetOnlineStatus()
+    {
+        IsOnline = PhotonNetwork.connected;
+        Debug.Log("IsOnline=" + IsOnline.ToString());
     }
     private void HandleInput()
     {
@@ -64,6 +74,7 @@ public class GameManager : PunBehaviour {
                 {
                     if(IsMyTurn())
                     {
+                        Debug.Log("Making Move!");
                         photonView.RPC("RPC_MakeMove", PhotonTargets.AllBuffered, hitTile.X, hitTile.Y, activePlayer);
                     }
                 }
@@ -78,6 +89,7 @@ public class GameManager : PunBehaviour {
         }
         if (PhotonNetwork.isMasterClient)
         {
+            Debug.Log("Starting Game");
             photonView.RPC("RPC_StartGame", PhotonTargets.AllBuffered);
         }
     }
@@ -106,13 +118,9 @@ public class GameManager : PunBehaviour {
                 List<Tile> winningTiles;
                 if(board.CheckWin(out winner, out winningTiles))
                 {
-                    int[,] winningTilesCoords = GetTileCoords(winningTiles);
-                    if(PhotonNetwork.isMasterClient)
-                    {
-                        photonView.RPC("RPC_GameOver", PhotonTargets.All, winner, false, winningTilesCoords);
-                    }
+                    int[,] winningTilesCoords = Tile.GetCoordinates(winningTiles);
                     GameOver(winner, false);
-                    ui.HighlightTiles(winningTiles);
+                    board.HighlightTiles(winningTiles);
                 }
                 else if(board.CheckFull())
                 {
@@ -172,7 +180,7 @@ public class GameManager : PunBehaviour {
             activePlayer = Player.P1;
         }
         // Update the UI
-        ui.SetTurnText(activePlayer);
+        HUD.ShowTurn(activePlayer);
     }
     private void SwitchTurns(Player lastPlayer)
     {
@@ -197,8 +205,7 @@ public class GameManager : PunBehaviour {
         GameRunning = true;
         InputEnabled = true;
         activePlayer = Player.P1;
-        ui.SetTurnText(activePlayer);
-        ui.GoToGameUI();
+        HUD.ShowTurn(activePlayer);
         board.CreateBoard(boardSize);
     }
     public void StartGame(int size)
@@ -206,24 +213,20 @@ public class GameManager : PunBehaviour {
         boardSize = size;
         StartGame();
     }
-
-    [PunRPC] void RPC_GameOver(Player winner, bool tie, int[,] winningTiles)
-    {
-
-    }
+    
     public void GameOver(Player winner, bool tie)
     {
         if(tie)
         {
             Debug.Log("Tie Game.");
-            ui.ShowTie();
+            HUD.ShowTie();
         }
         else
         {
             Debug.Log("Winner: " + winner.ToString());
             //SpewCoins();
             //ShowBigWin();
-            ui.ShowWinner(winner);
+            HUD.ShowWinner(winner);
         }
         InputEnabled = false;
         GameRunning = false;
@@ -244,16 +247,7 @@ public class GameManager : PunBehaviour {
     {
         return activePlayer == localPlayer;
     }
-    private int[,] GetTileCoords(List<Tile> tiles)
-    {
-        int[,] tileCoords = new int[tiles.Count, 2];
-        for(int t = 0; t < tiles.Count; t++)
-        {
-            tileCoords[t, 0] = tiles[t].X;
-            tileCoords[t, 1] = tiles[t].Y;
-        }
-        return tileCoords;
-    }
+    
 }
 
 public struct Move
