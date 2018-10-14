@@ -568,7 +568,6 @@ public class Board : MonoBehaviour {
         }
         return true;
     }
-    
     public static bool IsInBounds(TileState[,] boardState, int x, int y)
     {
         return x >= 0 && x < boardState.GetLength(0) && y >= 0 && y < boardState.GetLength(0);
