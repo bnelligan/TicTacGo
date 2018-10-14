@@ -20,6 +20,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4456241452051768}
   - component: {fileID: 212549657223662296}
+  - component: {fileID: 222041030273717164}
   m_Layer: 0
   m_Name: Token_BlueChip
   m_TagString: Token
@@ -86,3 +87,10 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!222 &222041030273717164
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1100677397903242}
+  m_CullTransparentMesh: 0

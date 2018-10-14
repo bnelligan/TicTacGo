@@ -20,7 +20,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4334577925271914}
   - component: {fileID: 114609014347804236}
-  - component: {fileID: 114484809997321146}
+  - component: {fileID: 114948316198764736}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -41,34 +41,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &114484809997321146
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1520126326804478}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c886b197870a4954596b7d257268c340, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  StartCanvas: {fileID: 0}
-  GameCanvas: {fileID: 0}
-  SizeSelect: {fileID: 0}
-  P1Select: {fileID: 0}
-  P2Select: {fileID: 0}
-  MsgText: {fileID: 0}
-  _itemPrefab: {fileID: 1899819975395296, guid: 899dc8f27cca34e4facad676767c5a7e,
-    type: 2}
-  tokenPadding: 10
-  tokenAutoFit: 1
-  TokenSprites:
-  - {fileID: 21300000, guid: f755d93a51ee9e644a1ffdacc54a2815, type: 3}
-  - {fileID: 21300000, guid: 06742be9fcf33af4d8c6fe051bd1c366, type: 3}
-  - {fileID: 21300000, guid: c3e003cb690db904c83ed432f9b3fed8, type: 3}
-  - {fileID: 21300000, guid: 3af902d2ffe73974984465efb7dc3f0c, type: 3}
-  p1Index: 0
-  p2Index: 0
 --- !u!114 &114609014347804236
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -80,9 +52,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a58ab801c37177a4f8c22068fd34f67e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  InputEnabled: 0
-  GameRunning: 0
-  IsOnline: 0
-  boardSize: 3
+  RematchFlag: 0
   moveDelay: 0.1
   HUD: {fileID: 0}
+--- !u!114 &114948316198764736
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1520126326804478}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 0
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  ObservedComponentsFoldoutOpen: 1
+  viewIdField: 0
+  instantiationId: -1
+  currentMasterID: -1
+  isRuntimeInstantiated: 0

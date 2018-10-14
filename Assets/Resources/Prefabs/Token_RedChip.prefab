@@ -20,6 +20,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4357618749239974}
   - component: {fileID: 212403111086696722}
+  - component: {fileID: 222185582978085972}
   m_Layer: 0
   m_Name: Token_RedChip
   m_TagString: Token
@@ -86,3 +87,10 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!222 &222185582978085972
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1551383845676338}
+  m_CullTransparentMesh: 0

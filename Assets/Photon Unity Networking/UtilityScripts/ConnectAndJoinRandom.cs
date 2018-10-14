@@ -10,8 +10,8 @@ public class ConnectAndJoinRandom : Photon.MonoBehaviour
 {
     /// <summary>Connect automatically? If false you can set this to true later on or call ConnectUsingSettings in your own scripts.</summary>
     public bool AutoConnect = true;
-
-    public byte Version = 1;
+    public byte Version = 2;
+    GameOptions options;
 
     /// <summary>if we don't want to connect in Start(), we have to "remember" if we called ConnectUsingSettings()</summary>
     private bool ConnectInUpdate = true;
@@ -19,6 +19,7 @@ public class ConnectAndJoinRandom : Photon.MonoBehaviour
 
     public virtual void Start()
     {
+        options = FindObjectOfType<GameOptions>();
         PhotonNetwork.autoJoinLobby = false;    // we join randomly. always. no need to join a lobby to get the list of rooms.
     }
 
@@ -41,19 +42,19 @@ public class ConnectAndJoinRandom : Photon.MonoBehaviour
     public virtual void OnConnectedToMaster()
     {
         Debug.Log("OnConnectedToMaster() was called by PUN. Now this client is connected and could join a room. Calling: PhotonNetwork.JoinRandomRoom();");
-        PhotonNetwork.JoinRandomRoom();
+        PhotonNetwork.JoinRandomRoom(options.GetRoomOptions().CustomRoomProperties, GameOptions.MaxPlayers);
     }
 
     public virtual void OnJoinedLobby()
     {
         Debug.Log("OnJoinedLobby(). This client is connected and does get a room-list, which gets stored as PhotonNetwork.GetRoomList(). This script now calls: PhotonNetwork.JoinRandomRoom();");
-        PhotonNetwork.JoinRandomRoom();
+        PhotonNetwork.JoinRandomRoom(options.GetRoomOptions().CustomRoomProperties, GameOptions.MaxPlayers);
     }
 
     public virtual void OnPhotonRandomJoinFailed()
     {
         Debug.Log("OnPhotonRandomJoinFailed() was called by PUN. No random room available, so we create one. Calling: PhotonNetwork.CreateRoom(null, new RoomOptions() {maxPlayers = 4}, null);");
-        PhotonNetwork.CreateRoom(null, new RoomOptions() { MaxPlayers = 4 }, null);
+        PhotonNetwork.CreateRoom(null, options.GetRoomOptions(), null);
     }
 
     // the following methods are implemented to give you some context. re-implement them as needed.

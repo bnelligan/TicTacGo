@@ -1,88 +1,90 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Photon;
 
-public enum Player { P1, P2 };
+public enum Player { NONE, P1, P2 };
+public enum GameMode { LOCAL, ONLINE,  BOT }
 public class GameManager : PunBehaviour {
 
+    public List<Move> MoveHistory; 
     // Private vars
     int turn;
-    Player activePlayer = Player.P1;
-    Player localPlayer = Player.P1;
 
+
+    GameMode mode = GameMode.LOCAL;
     // Config
-    public bool InputEnabled = false;
-    public bool GameRunning = false;
-    public bool IsOnline = false;
-    public int boardSize = 3;
+    public bool RematchFlag = false;
+   
     public float moveDelay = 0.1f;
-    public List<Move> MoveHistory; 
-    // Access properties
+    // Properties
+    public bool IsInputEnabled { get; set; }
+    public bool IsGameRunning { get; private set; }
+    public bool IsMyTurn { get { return ActivePlayer == LocalPlayer; } }
+    public bool IsBotTurn { get { return !IsMyTurn; } }
+    public bool IsOnlineGame { get { return mode == GameMode.ONLINE; } }
+    public bool IsLocalGame { get { return mode == GameMode.LOCAL; } }
+    public bool IsBotGame { get { return mode == GameMode.BOT; } }
     public Board GameBoard { get { return board; } }
-    public GameHUD UI { get { return HUD; } } 
-    public Player CurrentPlayer { get { return activePlayer; } }
+    public int BoardSize { get { return options.BoardSize; } }
+    public GameHUD UI { get { return HUD; } }
+    public Player ActivePlayer { get; private set; }
+    public Player LocalPlayer {
+        get {
+            if (IsOnlineGame)
+                return PhotonNetwork.isMasterClient ? Player.P1 : Player.P2;
+            else if (IsBotGame)
+                return Player.P1;
+            else
+                return ActivePlayer;
+        }
+    }
+    public Player Opponent {
+        get {
+            return LocalPlayer == Player.P1 ? Player.P2 : Player.P1;
+        }
+    }
+    public Player Winner { get; private set; }
+
     // External refs
     Board board;
     [SerializeField]
     GameHUD HUD;
+    GameOptions options;
+    
 
-	// Use this for initialization
-	void Start () {
+    #region Start Logic
+    // Use this for initialization
+    void Start () {
+        Setup();
+        if(IsOnlineGame)
+        {
+            StartCoroutine(IE_StartWhenPlayersJoin());  
+        }
+        else
+        {
+            StartGame();
+        }
+	}
+    void Setup()
+    {
         if (HUD == null) HUD = GameObject.FindObjectOfType<GameHUD>();
         board = FindObjectOfType<Board>();
-        MoveHistory = new List<Move>();
-        SetLocalPlayer();
-        SetOnlineStatus();
-        StartCoroutine(IE_StartWhenPlayersJoin());    
-	}
-	
-	// Update is called once per frame
-	void Update () {
-        if(GameRunning && InputEnabled)
+        options = FindObjectOfType<GameOptions>();
+        if(options == null)
         {
-            HandleInput();
+            options = gameObject.AddComponent<GameOptions>();
         }
-        if(Input.GetKey(KeyCode.Escape))
-        {
-            Application.Quit();
-        }
-	}
 
-    private void SetLocalPlayer()
-    {
-        if (PhotonNetwork.isMasterClient)
-            localPlayer = Player.P1;
-        else
-            localPlayer = Player.P2;
-        Debug.Log("Set Local Player: " + localPlayer.ToString());
+        MoveHistory = new List<Move>();
+        SetGameMode();
+        SetFirstPlayer();
     }
-    private void SetOnlineStatus()
+
+	private IEnumerator IE_StartWhenPlayersJoin()
     {
-        IsOnline = PhotonNetwork.connected;
-        Debug.Log("IsOnline=" + IsOnline.ToString());
-    }
-    private void HandleInput()
-    {
-        if(Input.GetMouseButtonDown(0))
-        {
-            RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
-            if(hit)
-            {
-                Tile hitTile = hit.collider.GetComponent<Tile>();
-                if(hitTile)
-                {
-                    if(IsMyTurn())
-                    {
-                        Debug.Log("Making Move!");
-                        photonView.RPC("RPC_MakeMove", PhotonTargets.AllBuffered, hitTile.X, hitTile.Y, activePlayer);
-                    }
-                }
-            }            
-        }
-    }
-    public IEnumerator IE_StartWhenPlayersJoin()
-    {
+        HUD.ShowWaitingForPlayers();
         while (PhotonNetwork.playerList.Length < 2)
         {
             yield return new WaitForEndOfFrame();
@@ -94,50 +96,229 @@ public class GameManager : PunBehaviour {
         }
     }
 
-    [PunRPC] void RPC_MakeMove(int x, int y, Player player)
+    [PunRPC] void RPC_StartGame()
+    {
+        StartGame();
+    }
+
+    public void StartGame()
+    {
+        if (MoveHistory != null) MoveHistory.Clear();
+        else
+        {
+            MoveHistory = new List<Move>();
+        }
+        turn = 1;
+        IsGameRunning = true;
+        IsInputEnabled = true;
+        if(RematchFlag)
+        {
+            // Loser goes first in rematch
+            SwitchTurns(ActivePlayer);
+            RematchFlag = false;
+        }
+        if(IsBotGame)
+        {
+            gameObject.AddComponent<Bot>();
+        }
+        HUD.ShowCurrentTurn();
+        board.BuildBoard(BoardSize);
+    }
+
+    public void StartGame(int size)
+    {
+        options.BoardSize = size;
+        StartGame();
+    }
+    #endregion
+    
+
+    // Update is called once per frame
+    void Update () {
+        if(IsGameRunning && IsInputEnabled)
+        {
+            HandleInput();
+        }
+        if(Input.GetKey(KeyCode.Escape))
+        {
+            Application.Quit();
+        }   
+	}
+    
+
+    #region Click Events
+    public void OnClick_Concede()
+    {
+        if (IsGameRunning)
+        {
+            photonView.RPC("RPC_GameOver", PhotonTargets.AllBuffered, Opponent);
+        }
+        else
+        {
+            ReturnToMenu();
+        }
+    }
+    public void OnClick_Rematch()
+    {
+        if (RematchFlag)
+        {
+            CancelRematch();
+        }
+        else if(!IsGameRunning)
+        {
+            RematchFlag = true;
+            if(IsOnlineGame)
+            {
+                HUD.ShowRequestRematch();
+                photonView.RPC("RPC_RequestRematch", PhotonTargets.Others);
+            }
+            else
+            {
+                Rematch();
+            }
+        }
+    }
+    public void OnClick_QuitToMenu()
+    {
+        if(IsGameRunning)
+        {
+            if (IsOnlineGame)
+                photonView.RPC("RPC_GameOver", PhotonTargets.AllBuffered, Opponent);
+            else
+                GameOver(Opponent);
+        }
+        ReturnToMenu();
+    }
+    public void OnClick_Tile(int x, int y)
+    {
+        Debug.Log("Clicked tile: (" + x + "," + y + ")");
+        if (IsMyTurn && IsGameRunning)
+        {
+            if (IsOnlineGame)
+            {
+                Debug.Log("Making Move!");
+                photonView.RPC("RPC_MakeMove", PhotonTargets.AllBuffered, x, y, ActivePlayer);
+            }
+            else
+            {
+                MakeMove(x, y, ActivePlayer);
+            }
+        }
+    }
+    #endregion
+    
+
+    #region Private Methods
+    private Player RandomPlayer()
+    {
+        return CoinFlip() ? Player.P1 : Player.P2;
+    }
+    private bool CoinFlip()
+    {
+        int i = Random.Range(0, 2);
+        return i == 0;
+    }
+    private void SetFirstPlayer()
+    {
+        if(IsLocalGame || IsBotGame)
+        {
+            ActivePlayer = RandomPlayer();
+        }
+        else if(IsOnlineGame)
+        {
+            // P1 is master client which is technically random
+            ActivePlayer = Player.P1;
+        }
+    }
+    private void SetGameMode()
+    {
+        if (PhotonNetwork.connected)
+        {
+            mode = GameMode.ONLINE;
+        }
+        else if(options.IsBotGame)
+        {
+            mode = GameMode.BOT;
+        }
+        else
+        {
+            mode = GameMode.LOCAL;
+        }
+        Debug.Log("IsOnline=" + IsOnlineGame.ToString());
+        Debug.Log("IsBot=" + IsBotGame.ToString());
+        Debug.Log("IsLocal=" + IsLocalGame.ToString());
+    }
+    private void HandleInput()
+    {
+        if(Input.GetMouseButtonDown(0))
+        {
+            RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
+            if(hit)
+            {
+                Tile hitTile = hit.collider.GetComponent<Tile>();
+                if(hitTile && IsMyTurn)
+                {
+                    if(IsOnlineGame)
+                    {
+                        Debug.Log("Making Move!");
+                        photonView.RPC("RPC_MakeMove", PhotonTargets.AllBuffered, hitTile.X, hitTile.Y, ActivePlayer);
+                    }
+                    else
+                    {
+                        MakeMove(hitTile.X, hitTile.Y, ActivePlayer);
+                    }
+                }
+            }
+        }
+    }
+    #endregion
+
+
+    #region Game Logic
+    [PunRPC]
+    void RPC_MakeMove(int x, int y, Player player)
     {
         MakeMove(x, y, player);
     }
     public void MakeMove(Tile tile, Player player)
     {
         //Debug.Log("Tile clicked: " + tile.name);
-        if(GameRunning)
+        if (IsGameRunning && ActivePlayer == player)
         {
-            if(board.MakeMove(tile, player))
+            Move move = new Move();
+            move.turn = turn;
+            move.tile = tile;
+            move.player = player;
+            if (board.MakeMove(move))
             {
                 // Record move
-                Move move = new Move();
-                move.turn = turn;
-                move.tile = tile;
-                move.player = player;
                 Debug.Log("Turn: " + move.turn + " | Tile: (" + move.tile.X + "," + move.tile.Y + ") | Player: " + move.player.ToString());
                 MoveHistory.Add(move);
 
                 // Check if there is a winner
                 Player winner;
                 List<Tile> winningTiles;
-                if(board.CheckWin(out winner, out winningTiles))
+                if (board.CheckWin(out winner, out winningTiles))
                 {
                     int[,] winningTilesCoords = Tile.GetCoordinates(winningTiles);
-                    GameOver(winner, false);
+                    GameOver(winner);
                     board.HighlightTiles(winningTiles);
                 }
-                else if(board.CheckFull())
+                else if (board.CheckFull())
                 {
-                    // Tie game
-                    GameOver(winner, true);
+                    TieGame();
                 }
                 else
                 {
                     SwitchTurns();
-                }            
+                }
             }
             else
             {
                 Debug.Log("Tile already taken.");
             }
         }
-        
+
     }
     public void MakeMove(int x, int y, Player player)
     {
@@ -152,102 +333,121 @@ public class GameManager : PunBehaviour {
     {
         StartCoroutine(IE_MakeDelayedMoves(moves));
     }
-    private IEnumerator IE_MakeDelayedMoves(List<Move> moves)
+    IEnumerator IE_MakeDelayedMoves(List<Move> moves)
     {
-        InputEnabled = false;
+        IsInputEnabled = false;
         for (int m = 0; m < moves.Count; m++)
         {
             yield return new WaitForSeconds(moveDelay);
             MakeMove(moves[m]);
         }
-        InputEnabled = true;
+        IsInputEnabled = true;
     }
 
     [PunRPC] void RPC_SwitchTurns(Player lastPlayer)
     {
         SwitchTurns(lastPlayer);
     }
-    private void SwitchTurns()
+    void SwitchTurns()
     {
         turn++;
         // Flip the current player
-        if(activePlayer == Player.P1)
+        if(ActivePlayer == Player.P1)
         {
-            activePlayer = Player.P2;
+            ActivePlayer = Player.P2;
         }
-        else if(activePlayer == Player.P2)
+        else if(ActivePlayer == Player.P2)
         {
-            activePlayer = Player.P1;
+            ActivePlayer = Player.P1;
         }
         // Update the UI
-        HUD.ShowTurn(activePlayer);
+        HUD.ShowCurrentTurn();
     }
-    private void SwitchTurns(Player lastPlayer)
+    void SwitchTurns(Player lastPlayer)
     {
-        if (lastPlayer == Player.P1)
-            activePlayer = Player.P2;
-        else
-            activePlayer = Player.P1;
-    }
-
-    [PunRPC] void RPC_StartGame()
-    {
-        StartGame();
-    }
-    public void StartGame()
-    {
-        if (MoveHistory != null) MoveHistory.Clear();
-        else
-        {
-            MoveHistory = new List<Move>();
-        }
-        turn = 1;
-        GameRunning = true;
-        InputEnabled = true;
-        activePlayer = Player.P1;
-        HUD.ShowTurn(activePlayer);
-        board.CreateBoard(boardSize);
-    }
-    public void StartGame(int size)
-    {
-        boardSize = size;
-        StartGame();
+        ActivePlayer = lastPlayer;
+        SwitchTurns();
     }
     
-    public void GameOver(Player winner, bool tie)
+    [PunRPC] void RPC_GameOver(Player winner, bool tie)
+    {
+        GameOver(winner, tie);
+    }
+    void GameOver(Player winner)
+    {
+        Debug.Log("Winner: " + winner.ToString());
+        //SpewCoins();
+        //ShowBigWin();
+        HUD.ShowWinner(winner);
+        IsInputEnabled = false;
+        IsGameRunning = false;
+    }
+    void TieGame()
+    {
+        Debug.Log("Tie Game.");
+        HUD.ShowTie();
+        GameOver(Player.P1, true);
+    }
+    void GameOver(Player winner, bool tie)
     {
         if(tie)
         {
-            Debug.Log("Tie Game.");
-            HUD.ShowTie();
+            TieGame();
         }
         else
         {
-            Debug.Log("Winner: " + winner.ToString());
-            //SpewCoins();
-            //ShowBigWin();
-            HUD.ShowWinner(winner);
+            GameOver(winner);
         }
-        InputEnabled = false;
-        GameRunning = false;
+        
     }
     public void EndGame()
     {
-        GameRunning = false;
-        InputEnabled = false;
+        IsInputEnabled = false;
+        IsGameRunning = false;
+        Winner = Player.NONE;
         board.DestroyBoard();
+        HUD.Reset();
     }
     public void ResetGame()
     {   
         EndGame();
         StartGame();
     }
-
-    private bool IsMyTurn()
+    public void ResetGame(int boardSize)
     {
-        return activePlayer == localPlayer;
+        EndGame();
+        StartGame(BoardSize);
     }
-    
+
+    [PunRPC] void RPC_RequestRematch()
+    {
+        if(RematchFlag)
+        {
+            photonView.RPC("RPC_Rematch", PhotonTargets.All);
+        }
+    }
+    [PunRPC] void RPC_Rematch()
+    {
+        Rematch();
+    }
+    void Rematch()
+    {
+        RematchFlag = true;
+        ResetGame();
+    }
+    public void CancelRematch()
+    {
+        RematchFlag = false;
+        HUD.ShowCancelRematch();
+    }
+    public void ReturnToMenu()
+    {
+        PhotonNetwork.Disconnect();
+        SceneManager.LoadScene("MainMenu");
+    }
+    #endregion
+
+
 }
 
 public struct Move
@@ -257,10 +457,26 @@ public struct Move
         turn = 0;
         tile = t;
         player = p;
+        score = 0;
     }
     public int turn;
+    public int score;
     public Tile tile;
     public Player player;
+    public Player opponent
+    {
+        get
+        {
+            if (player == Player.P1)
+                return Player.P2;
+            else if (player == Player.P2)
+                return Player.P1;
+            else
+                return Player.NONE;
+        }
+    }
+    public int X { get { return tile.X; } }
+    public int Y { get { return tile.Y; } }
 }
 
 

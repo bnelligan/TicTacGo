@@ -34,7 +34,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1734795130215936}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.4782343, y: 0.78629476, z: 9.566406}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -56,5 +56,5 @@ MonoBehaviour:
     type: 2}
   buildDelay: 0.1
   AnimateBoard: 1
-  p1Token: {fileID: 1551383845676338, guid: d7820919cd4a6e342bba01ed817b932f, type: 2}
-  p2Token: {fileID: 1100677397903242, guid: ac957c94b5417fb469c0910c0d44133b, type: 2}
+  p1Token: {fileID: 1855053522988000, guid: 3837071daff508a44bdfded6dd8a1d45, type: 2}
+  p2Token: {fileID: 1463198975842318, guid: 23f37057243d60746bc8f34e525be850, type: 2}

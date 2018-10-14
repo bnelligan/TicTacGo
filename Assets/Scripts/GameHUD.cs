@@ -1,30 +1,127 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 
 public class GameHUD : MonoBehaviour {
+    public bool ChangeBackColor;
 
-    public GameObject TurnText;
+    #region HUD Elements
+    [SerializeField] GameObject TxtHeader;
+    [SerializeField] GameObject BtnRematch;
+    [SerializeField] GameObject BtnMenu;
+    #endregion
 
-    #region Public Methods
-    public void ShowTurn(Player playerTurn)
+    #region Element Accessors
+    public string TurnText
     {
-        SetTurnText(playerTurn.ToString() + " GO!");
+        get { return TxtHeader.GetComponent<Text>().text; }
+        private set { TxtHeader.GetComponent<Text>().text = value; }
     }
-    public void ShowTie()
+    public string HeaderText
     {
-        SetTurnText("TIE GAME!");
+        get { return TxtHeader.GetComponent<Text>().text; }
+        private set { TxtHeader.GetComponent<Text>().text = value; }
     }
-    public void ShowWinner(Player winningPlayer)
+    public string RematchText
     {
-        SetTurnText(winningPlayer.ToString() + " WINS!");
+        get { return BtnRematch.GetComponentInChildren<Text>().text; }
+        set { BtnRematch.GetComponentInChildren<Text>().text = value; }
     }
     #endregion
 
-    private void SetTurnText(string text)
+    Camera cam;
+    GameManager manager;
+   
+    private void Awake()
     {
-        TurnText.GetComponent<TextMeshProUGUI>().text = text;
+        cam = Camera.main;
+        manager = FindObjectOfType<GameManager>();
+        Reset();
     }
+
+    #region Public Methods
+    public void ShowWaitingForPlayers()
+    {
+        HeaderText = "Waiting for players...";
+        BtnRematch.SetActive(false);
+    }
+    public void ShowCurrentTurn()
+    {
+        if(manager.IsLocalGame)
+        {
+            TurnText = GetPlayerName(manager.ActivePlayer) + " Go!";
+        }
+        else
+        {
+            TurnText = manager.IsMyTurn ? "Your Turn!" : "Opponent Turn...";
+        }
+    }
+    public void ShowTie()
+    {
+        TurnText = "Tie Game!";
+        BtnRematch.SetActive(true);
+    }
+    public void ShowWinner(Player winningPlayer)
+    {
+        if(manager.IsOnlineGame || manager.IsBotGame)
+        {
+            if(manager.LocalPlayer == winningPlayer)
+            {
+                HeaderText = "YOU WIN!";
+            }
+            else
+            {
+                HeaderText = "You Lost";
+            }
+        }
+        else
+        {
+            HeaderText = winningPlayer.ToString() + " WINS!";
+        }
+        BtnRematch.SetActive(true);
+        RematchText = "Rematch";
+    }
+    public void ShowRequestRematch()
+    {
+        HeaderText = "Rematch Requested";
+        RematchText = "Cancel";
+    }
+    public void ShowCancelRematch()
+    {
+        HeaderText = "Rematch Canceled!";
+        RematchText = "Rematch";
+    }
+    public void Reset()
+    {
+        HeaderText = "Starting...";
+        BtnRematch.SetActive(false);
+    }
+    #endregion
+
+    string GetPlayerName(Player player)
+    {
+        string name = "Player";
+        if(player == Player.P1)
+        {
+            name = "Player One";
+        }
+        else if (player == Player.P2)
+        {
+            name = "Player Two";
+        }
+        return name;
+    }
+    
+    IEnumerator ShiftBackgroundColor()
+    {
+        while(ChangeBackColor)
+        {
+
+            yield return new WaitForEndOfFrame();
+        }
+    }
+    // Hue change algorithm: https://stackoverflow.com/a/8510751
 }

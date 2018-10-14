@@ -5,29 +5,43 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
-public enum TileState { P1, P2, Empty };
+public enum TileState {EMPTY, P1, P2 };
 public class Tile : MonoBehaviour {
 
     public int X;
     public int Y;
-    float originalAlpha;
-    public float dimAlpha = 0.5f;
     public TileState State;
+    float originalAlpha;
+    float dimAlpha = 0.5f;
+    
+    private void Start()
+    {
+        originalAlpha = GetComponent<Image>().color.a;
+    }
 
     public void Dim()
     {
-        // Dim Tile
-        Color tileColor = GetComponent<SpriteRenderer>().color;
-        tileColor.a = dimAlpha;
-        GetComponent<SpriteRenderer>().color = tileColor;
+        SetAlpha(dimAlpha*originalAlpha);
+    }
+    public void ResetAlpha()
+    {
+        SetAlpha(originalAlpha);
+    }
+    public void SetAlpha(float a)
+    {
+        // Tile
+        Color tileColor = GetComponent<Image>().color;
+        tileColor.a = a;
+        GetComponent<Image>().color = tileColor;
 
-        // Dim token
-        if(transform.childCount > 0)
+        // Token
+        if (transform.childCount > 0)
         {
-            Color tokenColor = transform.GetChild(0).GetComponent<SpriteRenderer>().color;
-            tokenColor.a = dimAlpha;
-            transform.GetChild(0).GetComponent<SpriteRenderer>().color = tokenColor;
+            Color tokenColor = transform.GetChild(0).GetComponent<Image>().color;
+            tokenColor.a = a;
+            transform.GetChild(0).GetComponent<Image>().color = tokenColor;
         }
     }
 
@@ -47,5 +61,9 @@ public class Tile : MonoBehaviour {
         coords[0] = tile.X;
         coords[1] = tile.Y;
         return coords;
+    } 
+    public static int[] GetCoordinates(int x, int y)
+    {
+        return new int[2] { x, y };
     }
 }

@@ -287,7 +287,6 @@ public class OnlineManager : PunBehaviour, IPunTurnManagerCallbacks
     public void OnClick_StartGame()
     {
         // Set the board size from the dropdown
-        manager.boardSize = 3;
         // Set the player tokens
         //board.SetTokens(p1Token, p2Token);
         // Start the game 

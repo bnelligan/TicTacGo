@@ -1,21 +1,19 @@
-﻿/* Brendan Nelligan
- * May 2018
- * Fox Cub Interview
- */
-
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+
 public enum Direction { RIGHT, UP, LEFT, DOWN };
 public class Board : MonoBehaviour {
     // Board and tile info
     public Tile[,] board;
-    int _size = 3;
-    public float tileSize = 1.3f;
+    public TileState[,] boardState;
+    int size = 3;
+    float tileSize;
     public Tile tilePrefab;
     public float buildDelay = 0.1f;
     public bool AnimateBoard = true;
-
+    
     // Tokens
     [SerializeField] GameObject p1Token;
     [SerializeField] GameObject p2Token;
@@ -25,10 +23,10 @@ public class Board : MonoBehaviour {
     public Texture2D TileTexture { get { return tilePrefab.GetComponent<SpriteRenderer>().sprite.texture; } }
     
 
-    public int Size { get { return _size; } }
+    public int Size { get { return size; } }
 
     // Directional vectors
-    List<Vector2> directions = new List<Vector2> {
+    static List<Vector2> directions = new List<Vector2> {
         new Vector2(1,0),
         new Vector2(1,1),
         new Vector2(0,1),
@@ -39,47 +37,62 @@ public class Board : MonoBehaviour {
         new Vector2(1,-1)
     };
 
+    public void BuildBoard()
+    {
+        BuildBoard(size);
+    }
     /// <summary>
     /// Create and spawn a board of tiles of the given size
     /// </summary>
     /// <param name="size">Side length of the board (3 => 3x3 board)</param>
-    public void CreateBoard(int size)
+    public void BuildBoard(int size)
     {
+        this.size = size;
         DestroyBoard();
-        _size = size;
-        // Start in the top left corner, relative to board center
-        Vector3 startPos = transform.position - tileSize * new Vector3((_size - 1) / 2f, (_size - 1) / 2f, 1);
-        // Create an empty board matrix of the correct size
-        board = new Tile[_size, _size];
+        CalculateTileSize();
+        GetComponent<GridLayoutGroup>().constraintCount = size;
+        GameManager mgr = FindObjectOfType<GameManager>();
 
-        // Spawn tiles and populate the board
-        for (int i = 0; i < _size; i++)
+        board = new Tile[this.size, this.size];
+        boardState = new TileState[this.size, this.size];
+        for (int i = 0; i < this.size; i++)
         {
-            for (int j = 0; j < _size; j++)
+            for (int j = 0; j < this.size; j++)
             {
                 // Create a new tile at the correct position, and add it to the board matrix
                 Tile newTile = Instantiate(tilePrefab, transform);
-                newTile.transform.position = startPos + new Vector3(i , j) * tileSize;
+                
+                //newTile.transform.position = startPos + new Vector3(i, j) * tileSize;
+                //newTile.transform.localScale *= tileSize;
                 board[i, j] = newTile;
+                boardState[i, j] = TileState.EMPTY;
                 newTile.X = i;
                 newTile.Y = j;
-                newTile.State = TileState.Empty;
+                newTile.State = TileState.EMPTY;
+                newTile.GetComponent<Button>().onClick.AddListener(delegate { mgr.OnClick_Tile(newTile.X, newTile.Y); });
                 // If the board is being animated, hide the tiles as they are made
                 if(AnimateBoard)
                     newTile.GetComponent<SpriteRenderer>().enabled = false;
             }
         }
         if (AnimateBoard == true)
-            StartCoroutine(BuildBoardSpiral());
+            StartCoroutine(AnimateBoardSpiral());
     }
+    void CalculateTileSize()
+    {
+        const float SCALE_FACTOR = 0.5f;
+        const float PIXEL_FACTOR = 100f;
 
+        float sqScreenSize = Mathf.Min(Screen.width, Screen.height) * SCALE_FACTOR;
+        tileSize = sqScreenSize / size / PIXEL_FACTOR;
+    }
     /// <summary>
-    /// Build the board in a spiral pattern
+    /// Animate the board build in a spiral pattern
     /// </summary>
-    public IEnumerator BuildBoardSpiral()
+    IEnumerator AnimateBoardSpiral()
     {
         GameManager manager = FindObjectOfType<GameManager>();
-        manager.InputEnabled = false;
+        manager.IsInputEnabled = false;
 
         Direction dir = Direction.RIGHT;
         int x = 0;
@@ -134,7 +147,7 @@ public class Board : MonoBehaviour {
                     break;
             }
 
-            // Move in the direction
+            // Move to the next tile
             switch (dir)
             {
                 case Direction.RIGHT:
@@ -151,7 +164,7 @@ public class Board : MonoBehaviour {
                     break;
             }
             // Bounds check on move
-            if (x < 0 || y < 0 || x >= Size || y >= Size)
+            if (!InBounds(x, y))
             {
                 canMove = false;
             }
@@ -161,7 +174,7 @@ public class Board : MonoBehaviour {
                 canMove = false;
             }
         }
-        manager.InputEnabled = true;
+        manager.IsInputEnabled = true;
     }
 
     void TurnLeft(ref Direction start)
@@ -180,39 +193,51 @@ public class Board : MonoBehaviour {
             case Direction.LEFT:
                 start = Direction.DOWN;
                 break;
-        }
-            
+        }  
     }
+    
 
     public void DestroyBoard()
     {
         // Find all tiles and tokens
-        GameObject[] tiles = GameObject.FindGameObjectsWithTag("Tile");
         GameObject[] tokens = GameObject.FindGameObjectsWithTag("Token");
-
-        // Destroy each tile
-        for(int til = 0; til < tiles.Length; til++)
-        {
-            Destroy(tiles[til]);
-        }
+        GameObject[] tiles = GameObject.FindGameObjectsWithTag("Tile");
+        
         // Destroy each token
-        for(int tok = 0; tok < tokens.Length; tok++)
+        for(int i = 0; i < tokens.Length; i++)
         {
-            Destroy(tokens[tok]);
+            Destroy(tokens[i]);
         }
+        // Destroy each tile
+        for(int i = 0; i < tiles.Length; i++)
+        {
+            Destroy(tiles[i]);
+        }
+        
         // Null the board
         board = null;
+        boardState = null;
     }
 
-    public bool MakeMove(Tile target, Player player)
+    public bool MakeMove(Move move)
     {
         // Check if the tile is already taken
-        if (target.State != TileState.Empty)
+        if (move.tile.State == TileState.EMPTY)
         {
-            // Enums are designed to be compared
-            if ((byte)target.State == (byte)player)
+            PlaceToken(move.tile, move.player);
+            List<Tile> captures = CheckForCaptures(move.tile, move.player);
+            foreach(Tile t in captures)
             {
-                Debug.LogWarning("Cannot place token. Player already owns tile: (" + target.X + "," + target.Y + ")");
+                CaptureTile(t, move.player);
+            }
+            return true;
+        }
+        // Tile is free!
+        else
+        {
+            if (move.tile.State == PlayerToState(move.player))
+            {
+                Debug.LogWarning("Cannot place token. Player already owns tile: (" + move.tile.X + "," + move.tile.Y + ")");
                 // TODO: Add UI feedback outside debug log
             }
             else
@@ -221,13 +246,6 @@ public class Board : MonoBehaviour {
                 // TODO: Add UI feedback outside debug log
             }
             return false;
-        }
-        // Tile is free!
-        else
-        {
-            PlaceToken(target, player);
-            CheckCapture(target, player);
-            return true;
         }
     }
 
@@ -247,213 +265,53 @@ public class Board : MonoBehaviour {
         else
             token = p2Token;
         token = Instantiate(token, target.transform);
-        token.transform.position += new Vector3(0, 0, -1);
-        target.State = (TileState)player;
+        //token.transform.position += new Vector3(0, 0, -1);
+        target.State = PlayerToState(player);
+        boardState[target.X, target.Y] = target.State;
     }
     
     public bool CheckWin(out Player winner, out List<Tile> winningTiles)
     {
-        // Winner must be set because it is output. It is not used if this returns false
-        winner = Player.P1;
-        List<Tile> tileSet = new List<Tile>();
-        winningTiles = tileSet;
-        // Check rows
-        for(int r = 0; r < _size; r++)
+        winningTiles = new List<Tile>();
+        List<int[]> winningCoords;
+        bool win = false;
+        winner = GetWinner(boardState, out winningCoords);
+        if (winner != Player.NONE)
         {
-            tileSet.Clear();
-            TileState lead = TileState.Empty;
-            bool win = true;
-            for(int c = 0; c < _size; c++)
+            foreach(int[] c in winningCoords)
             {
-                tileSet.Add(board[c, r]);
-                // Winning rows can't have empty tiles
-                if (board[c,r].State == TileState.Empty)
-                {
-                    win = false;
-                    break;
-                }
-                // Get the leader from first tile in row
-                if(c == 0)
-                {
-                    lead = board[c,r].State;
-                }
-                else if (board[c, r].State != lead)
-                {
-                    // No win if tile doesn't match lead
-                    win = false;
-                    break;
-                }
+                winningTiles.Add(board[c[0], c[1]]);
             }
-            // Win check for row
-            if(win && lead != TileState.Empty)
-            {
-                winner = (Player)lead;
-                winningTiles = tileSet;
-                return true;
-            }
+            win = true;
         }
-
-        // Check Columns
-        for (int c = 0; c < _size; c++)
-        {
-            tileSet.Clear();
-            TileState lead = TileState.Empty;
-            bool win = true;
-            for (int r = 0; r < _size; r++)
-            {
-                tileSet.Add(board[c, r]);
-                // Winning columns can't have empty tiles
-                if (board[c, r].State == TileState.Empty)
-                {
-                    win = false;
-                    break;
-                }
-                // Get the leader from the first tile in column
-                if (r == 0)
-                {
-                    lead = board[c, r].State;
-                }
-                // No win possible if tile doesn't match the lead
-                else if (board[c, r].State != lead)
-                {
-                    win = false;
-                    break;
-                }
-            }
-            // Win check for column
-            if (win && lead != TileState.Empty)
-            {
-                winner = (Player)lead;
-                winningTiles = tileSet;
-                return true;
-            }
-        }
-
-        // Check first diagonal
-        TileState d1Lead = TileState.Empty;
-        bool d1Win = true;
-        tileSet.Clear();
-        for(int d = 0; d < _size; d++)
-        {
-            tileSet.Add(board[d, d]);
-            // Get the diagonal lead
-            if (d == 0)
-            {
-                d1Lead = board[d, d].State;
-                // No win if first tile is empty
-                if(d1Lead == TileState.Empty)
-                {
-                    d1Win = false;
-                    break;
-                }
-            }
-            // No win if other diagonal tiles don't match
-            else if (board[d,d].State != d1Lead)
-            {
-                d1Win = false;
-                break;
-            }
-        }
-        if(d1Win && d1Lead != TileState.Empty)
-        {
-            winner = (Player)d1Lead;
-            winningTiles = tileSet;
-            return true;
-        }
-
-        // Check second diagonal
-        TileState d2Lead = TileState.Empty;
-        bool d2Win = true;
-        tileSet.Clear();
-        for (int d = 0; d < _size; d++)
-        {
-            tileSet.Add(board[_size - (d + 1), d]);
-            // Get the diagonal lead
-            if (d == 0)
-            {
-                d2Lead = board[_size - (d + 1), d].State;
-                // No win if first tile is empty
-                if (d2Lead == TileState.Empty)
-                {
-                    d2Win = false;
-                    break;
-                }
-            }
-            // No win if other diagonal tiles don't match
-            else if (board[_size - (d + 1), d].State != d2Lead)
-            {
-                d2Win = false;
-                break;
-            }
-        }
-        if (d2Win && d2Lead != TileState.Empty)
-        {
-            winner = (Player)d2Lead;
-            winningTiles = tileSet;
-            return true;
-        }
-
-        // If we get here, there is no winner
-        return false;
+        return win;        
     }
     
     public bool CheckFull()
     {
-        bool full = true;
-        foreach(Tile t in board)
-        {
-            if(t.State == TileState.Empty)
-            {
-                full = false;
-            }
-        }
-        return full;
+        return CheckFull(boardState);
     }
 
-    public void CheckCapture(Tile target, Player player)
+    public List<Tile> CheckForCaptures(Tile target, Player player)
     {
-        // Set the opponent
-        Player opponent;
-        if (player == Player.P1)
-            opponent = Player.P2;
-        else
-            opponent = Player.P1;
-        //Debug.Log("Checking capture on tile: (" + target.X + "," + target.Y + ")");
-        // Check each adjacent tile for the opponent's token
-        foreach(Vector2 dir in directions)
+        List<Tile> captures = new List<Tile>();
+        List<int[]> capturesCoords = FindCaptures(boardState, target.X, target.Y, player);
+        foreach(int[] c in capturesCoords)
         {
-            Tile adjTile;
-            int ax = (int)(target.X + dir.x);
-            int ay = (int)(target.Y + dir.y);
-            // Bounds check
-            if(ax >= 0 && ax < _size && ay >= 0 && ay < _size)
-            {
-                adjTile = board[ax, ay];
-                //Debug.Log("Adj Tile: (" + adjTile.X + "," + adjTile.Y + ")");
-                if (adjTile.State == (TileState)opponent)
-                {
-                    // Check the next tile over
-                    ax += (int)dir.x;
-                    ay += (int)dir.y;
-                    if (ax >= 0 && ax < _size && ay >= 0 && ay < _size)
-                    {
-                        // If the next tile over is owned by this player, capture the tile between them
-                        Tile nextTile = board[ax, ay];
-                        if (nextTile.State == (TileState)player)
-                        {
-                            PlaceToken(adjTile, player);
-                        }
-                    }
-                }
-            }
-            else
-            {
-                
-            }
+            captures.Add(board[c[0], c[1]]);
         }
+        return captures;
+    }
 
+    public void CaptureTile(Tile target, Player player)
+    {
+        PlaceToken(target, player);
     }
     
+    private bool InBounds(int x, int y)
+    {
+        return x >= 0 && x < size && y >= 0 && y < size;
+    }
     public void SetTokens(GameObject p1, GameObject p2)
     {
         p1Token = p1;
@@ -463,11 +321,404 @@ public class Board : MonoBehaviour {
     public void HighlightTiles(List<Tile> tiles)
     {
         foreach (Tile t in board)
-        {
+        { 
             if (!tiles.Contains(t))
             {
                 t.Dim();
             }
+            else
+            {
+                t.ResetAlpha();
+            }
         }
     }
+
+    #region Static Methods
+    public static TileState PlayerToState(Player player)
+    {
+        switch(player)
+        {
+            case Player.P1:
+                return TileState.P1;
+            case Player.P2:
+                return TileState.P2;
+            default:
+                return TileState.EMPTY;
+        }
+    }
+    public static Player StateToPlayer(TileState state)
+    {
+        switch (state)
+        {
+            case TileState.P1:
+                return Player.P1;
+            case TileState.P2:
+                return Player.P2;
+            default:
+                return Player.NONE;
+        }
+
+    }
+    public static TileState[,] MakeMove(TileState[,] boardState, int x, int y, Player player)
+    {
+        TileState[,] newBoard = CloneBoardState(boardState);
+        if(newBoard[x, y] == TileState.EMPTY)
+        {
+            newBoard[x, y] = PlayerToState(player);
+            List<int[]> captures = FindCaptures(newBoard, x, y, player);
+            foreach(int[] c in captures)
+            {
+                newBoard[c[0], c[1]] = PlayerToState(player);
+            }
+        }
+        return newBoard;
+    }
+    public static Player GetWinner(TileState[,] boardState, out List<int[]> winningCoords)
+    {
+        int size = boardState.GetLength(0);
+        winningCoords = new List<int[]>();
+        List<int[]> tileSet = new List<int[]>();
+
+        // Check rows
+        for (int r = 0; r < size; r++)
+        {
+            tileSet.Clear();
+            TileState lead = TileState.EMPTY;
+            bool win = true;
+            for (int c = 0; c < size; c++)
+            {
+                tileSet.Add(new int[2] { c, r });
+                // Winning rows can't have empty tiles
+                if (boardState[c, r] == TileState.EMPTY)
+                {
+                    win = false;
+                    break;
+                }
+                // Get the leader from first tile in row
+                if (c == 0)
+                {
+                    lead = boardState[c, r];
+                }
+                else if (boardState[c, r] != lead)
+                {
+                    // No win if tile doesn't match lead
+                    win = false;
+                    break;
+                }
+            }
+            // Win check for row
+            if (win && lead != TileState.EMPTY)
+            {
+                winningCoords = tileSet;
+                return (Player) lead;
+            }
+        }
+
+        // Check Columns
+        for (int c = 0; c < size; c++)
+        {
+            tileSet.Clear();
+            TileState leadState = TileState.EMPTY;
+            bool win = true;
+            for (int r = 0; r < size; r++)
+            {
+                tileSet.Add(new int[2] { c, r });
+                // Winning columns can't have empty tiles
+                if (boardState[c, r] == TileState.EMPTY)
+                {
+                    win = false;
+                    break;
+                }
+                // Get the leader from the first tile in column
+                if (r == 0)
+                {
+                    leadState = boardState[c, r];
+                }
+                // No win possible if tile doesn't match the lead
+                else if (boardState[c, r] != leadState)
+                {
+                    win = false;
+                    break;
+                }
+            }
+            // Win check for column
+            if (win && leadState != TileState.EMPTY)
+            {
+                winningCoords = tileSet;
+                return (Player)leadState;
+            }
+        }
+
+        // Check first diagonal
+        tileSet.Clear();
+        TileState d1Lead = TileState.EMPTY;
+        bool d1Win = true;
+        for (int d = 0; d < size; d++)
+        {
+            tileSet.Add(new int[2] { d, d });
+            // Get the diagonal lead
+            if (d == 0)
+            {
+                d1Lead = boardState[d, d];
+                // No win if first tile is empty
+                if (d1Lead == TileState.EMPTY)
+                {
+                    d1Win = false;
+                    break;
+                }
+            }
+            // No win if other diagonal tiles don't match
+            else if (boardState[d, d] != d1Lead)
+            {
+                d1Win = false;
+                break;
+            }
+        }
+        if (d1Win && d1Lead != TileState.EMPTY)
+        {
+            winningCoords = tileSet;
+            return (Player)d1Lead;
+        }
+
+        // Check second diagonal
+        tileSet.Clear();
+        TileState d2Lead = TileState.EMPTY;
+        bool d2Win = true;
+        for (int d = 0; d < size; d++)
+        {
+            tileSet.Add(new int[2] { size - (d + 1), d });
+            // Get the diagonal lead
+            if (d == 0)
+            {
+                d2Lead = boardState[size - (d + 1), d];
+                // No win if first tile is empty
+                if (d2Lead == TileState.EMPTY)
+                {
+                    d2Win = false;
+                    break;
+                }
+            }
+            // No win if other diagonal tiles don't match
+            else if (boardState[size - (d + 1), d] != d2Lead)
+            {
+                d2Win = false;
+                break;
+            }
+        }
+        if (d2Win && d2Lead != TileState.EMPTY)
+        {
+            winningCoords = tileSet;
+            return (Player)d2Lead;
+        }
+
+        // If the board is full, whoever has the most tiles wins
+        if (CheckFull(boardState))
+        {
+            List<int[]> p1Tiles = new List<int[]>();
+            List<int[]> p2Tiles = new List<int[]>();
+            for(int i = 0; i < size; i++)
+            {
+                for(int j = 0; j < size; j++)
+                {
+                    if (boardState[i, j] == TileState.P1)
+                        p1Tiles.Add(new int[2] { i, j });
+                    else if (boardState[i, j] == TileState.P2)
+                        p2Tiles.Add(new int[2] { i, j });
+                }
+            }
+            int p1Score = p1Tiles.Count;
+            int p2Score = p2Tiles.Count;
+
+            if (p1Score + p2Score == size * size)
+            {
+                if (p1Score > p2Score)
+                {
+                    winningCoords = p1Tiles;
+                    return Player.P1;
+                }
+                else if (p2Score > p1Score)
+                {
+                    winningCoords = p2Tiles;
+                    return Player.P2;
+                }
+            }
+        }
+
+        // If we get here, there is no winner
+        return Player.NONE;
+    }
+    public static Player GetWinner(TileState[,] boardState)
+    {
+        List<int[]> winningCoords;
+        return GetWinner(boardState, out winningCoords);
+    }
+    public static bool CheckPlayerWin(TileState[,] boardState, Player player)
+    {
+        List<int[]> winningCoords;
+        return player == GetWinner(boardState, out winningCoords);
+    }
+    public static bool CheckFull(TileState[,] boardState)
+    {
+        foreach(TileState t in boardState)
+        {
+            if(t == TileState.EMPTY)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    public static bool IsInBounds(TileState[,] boardState, int x, int y)
+    {
+        return x >= 0 && x < boardState.GetLength(0) && y >= 0 && y < boardState.GetLength(0);
+    }
+    public static bool IsEdgeTile(TileState[,] boardState, int x, int y)
+    {
+        int s = boardState.GetLength(0) - 1;
+        return x  == 0 || y == 0 || x == s || y == s;
+    }
+    public static bool IsCornerTile(TileState[,] boardState, int x, int y)
+    {
+        bool isCorner = false;
+        List<int[]> corners = FindCorners(boardState);
+        foreach (int[] c in corners)
+        {
+            if (c[0] == x && c[1] == y && boardState[x, y] == TileState.EMPTY)
+            {
+                isCorner = true;
+            }
+        }
+        return isCorner;
+    }
+    public static bool IsVulnerableMove(TileState[,] boardState, Move move)
+    {
+        bool isVulnerable = false;
+        for(int d = 0; d < directions.Count / 2; d++)
+        {
+            Vector2 dv = directions[d];
+            int ax = move.X + (int)dv.x;
+            int ay = move.Y + (int)dv.y;
+            int ox = move.X + -(int)dv.x;
+            int oy = move.Y + -(int)dv.y;
+            
+            if(IsInBounds(boardState, ax, ay) && IsInBounds(boardState, ox, oy))
+            {
+                if(boardState[ax, ay] == PlayerToState(move.opponent) && boardState[ox, oy] == PlayerToState(move.opponent))
+                {
+                    isVulnerable = true;
+                }
+            }
+        }
+        return isVulnerable;
+    }
+    public static List<int[]> FindCaptures(TileState[,] boardState, int x, int y, Player player)
+    {
+        List<int[]> captures = new List<int[]>();
+
+        // Set the opponent
+        Player opponent;
+        if (player == Player.P1)
+            opponent = Player.P2;
+        else
+            opponent = Player.P1;
+        //Debug.Log($"Checking capture on tile: ({target.X},{target.Y})");
+        // Check each adjacent tile for the opponent's token
+        foreach (Vector2 dir in directions)
+        {
+            int ax = (int)(x + dir.x);
+            int ay = (int)(y + dir.y);
+            // Bounds check
+            if (IsInBounds(boardState, ax, ay))
+            {
+                //Debug.Log("Adj Tile: (" + adjTile.X + "," + adjTile.Y + ")");
+                if (boardState[ax, ay] == PlayerToState(opponent))
+                {
+                    // Check the next tile over
+                    int a2x = ax + (int)dir.x;
+                    int a2y = ay + (int)dir.y;
+                    if (IsInBounds(boardState, a2x, a2y))
+                    {
+                        // If the next tile over is owned by this player, capture the tile between them
+                        if (boardState[a2x, a2y] == PlayerToState(player))
+                        {
+                            captures.Add(new int[2] { ax, ay });
+                        }
+                    }
+                }
+            }
+        }
+
+        return captures;
+    }
+    public static List<int[]> FindWinningMoves(TileState[,] boardState, Player player)
+    {
+        List<int[]> winningMoves = new List<int[]>();
+        for(int i = 0; i < boardState.GetLength(0); i++)
+        {
+            for(int j = 0; j < boardState.GetLength(1); j++)
+            {
+                if(boardState[i,j] == TileState.EMPTY)
+                {
+                    TileState[,] newBoard = MakeMove(boardState, i, j, player);
+                    if(CheckPlayerWin(newBoard, player))
+                    {
+                        winningMoves.Add(new int[2] { i, j });
+                    }
+                }
+            }
+        }
+        return winningMoves;
+    }
+    public static List<int[]> FindAdjacent(TileState[,] boardState, int x, int y)
+    {
+        List<int[]> adjacentCoords = new List<int[]>();
+        foreach (Vector2 d in directions)
+        {
+            int ax = x + (int)d.x;
+            int ay = y + (int)d.y;
+            if(IsInBounds(boardState, ax, ay))
+            {
+                adjacentCoords.Add(Tile.GetCoordinates(ax, ay));
+            }
+        }
+        return adjacentCoords;
+    }
+    public static List<int[]> FindAdjacentByState(TileState[,] boardState, int x, int y, TileState state)
+    {
+        List<int[]> adjCoords = FindAdjacent(boardState, x, y);
+        for(int i = adjCoords.Count - 1; i >= 0; i--)
+        {
+            int[] c = adjCoords[i];
+            if(boardState[c[0], c[1]] != state)
+            {
+                adjCoords.RemoveAt(i);
+            }
+        }
+        return adjCoords;
+    }
+    public static List<int[]> FindCorners(TileState[,] boardState)
+    {
+        int s = boardState.GetLength(0) - 1;
+        return new List<int[]>()
+        {
+            new int[2] {0, 0},
+            new int[2] {0, s},
+            new int[2] {s, 0},
+            new int[2] {s, s},
+        };
+    }
+    public static TileState[,] CloneBoardState(TileState[,] boardState)
+    {
+        TileState[,] clonedBoard = new TileState[boardState.GetLength(0), boardState.GetLength(1)];
+        for(int i = 0; i < boardState.GetLength(0); i++)
+        {
+            for(int j = 0; j < boardState.GetLength(1); j++)
+            {
+                clonedBoard[i, j] = boardState[i, j];
+            }
+        }
+        return clonedBoard;
+    }
+    #endregion
 }

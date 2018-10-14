@@ -109,7 +109,6 @@ public class UI_Manager : MonoBehaviour
     public void OnClick_StartGame()
     {
         // Set the board size from the dropdown
-        manager.boardSize = 3;
         // Set the player tokens
         //board.SetTokens(p1Token, p2Token);
         // Start the game 
@@ -118,20 +117,15 @@ public class UI_Manager : MonoBehaviour
         // Enable the correct canvas
         GoToGameUI();
     }
-
     public void OnClick_Restart()
     {
         manager.GameBoard.AnimateBoard = true;
         manager.ResetGame();
     }
-
     public void OnClick_Menu()
     {
-        manager.EndGame();
         GoToMainMenu();
     }
-
-    
     #endregion
 
 

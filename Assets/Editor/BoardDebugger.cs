@@ -12,7 +12,7 @@ public class BoardDebugger : Editor {
     
     float tileSize = 50;
     float tileDist = 10;
-    int size = 3;
+    int boardSize = 3;
     int sizeIndex = 0;
     int winconIndex = 0;
     int playerIndex = 0;
@@ -22,7 +22,7 @@ public class BoardDebugger : Editor {
     string msgText = "";
     
     // size col wins + size row wins + 2 diagonal wins
-    int WinCount { get { return size * 2 + 2; } }
+    int WinCount { get { return boardSize * 2 + 2; } }
     Player winner {
         get
         {
@@ -45,12 +45,12 @@ public class BoardDebugger : Editor {
 
     private void Awake()
     {
-        dBoard = new TileState[size, size];
-        for (int i = 0; i < size; i++)
+        dBoard = new TileState[boardSize, boardSize];
+        for (int i = 0; i < boardSize; i++)
         {
-            for (int j = 0; j < size; j++)
+            for (int j = 0; j < boardSize; j++)
             {
-                dBoard[i, j] = TileState.Empty;
+                dBoard[i, j] = TileState.EMPTY;
                 //Debug.Log(dBoard[i, j].ToString());
             }
         }
@@ -62,12 +62,12 @@ public class BoardDebugger : Editor {
         // Creates a new board if one doesn't exist
         if(dBoard == null)
         {
-            dBoard = new TileState[size, size];
-            for(int i = 0; i < size; i++)
+            dBoard = new TileState[boardSize, boardSize];
+            for(int i = 0; i < boardSize; i++)
             {
-                for(int j = 0; j < size; j++)
+                for(int j = 0; j < boardSize; j++)
                 {
-                    dBoard[i, j] = TileState.Empty;
+                    dBoard[i, j] = TileState.EMPTY;
                     //Debug.Log(dBoard[i, j].ToString());
                 }
             }
@@ -75,24 +75,24 @@ public class BoardDebugger : Editor {
 
         // Win condition selection grid
         GUILayout.Label("Win Condition");
-        string[] winOptions = new string[size*2+2];
-        for(int i = 0; i < size*2+2; i++)
+        string[] winOptions = new string[boardSize*2+2];
+        for(int i = 0; i < boardSize*2+2; i++)
         {
-            if(i < size)
+            if(i < boardSize)
             {
                 winOptions[i] = "Col: " + (i + 1);
             }
-            else if(i < size*2)
+            else if(i < boardSize*2)
             {
-                winOptions[i] = "Row: " + (i - size + 1);
+                winOptions[i] = "Row: " + (i - boardSize + 1);
             }
             else
             {
-                winOptions[i] = "Diag: " + (i - size*2+1);
+                winOptions[i] = "Diag: " + (i - boardSize*2+1);
             }
             
         }
-        winconIndex = GUILayout.SelectionGrid(winconIndex, winOptions, size);
+        winconIndex = GUILayout.SelectionGrid(winconIndex, winOptions, boardSize);
 
         // Winner select
         GUILayout.Label("Winner");
@@ -101,9 +101,9 @@ public class BoardDebugger : Editor {
         // Board Size
         GUILayout.Label("Board Size");
         sizeIndex = GUILayout.SelectionGrid(sizeIndex, new string[2] { "3x3", "4x4" }, 2);
-        if (sizeIndex == 0 && size != 3)
+        if (sizeIndex == 0 && boardSize != 3)
             ResizeBoard(3);
-        else if (sizeIndex == 1 && size != 4)
+        else if (sizeIndex == 1 && boardSize != 4)
             ResizeBoard(4);
 
         // Test button
@@ -148,12 +148,12 @@ public class BoardDebugger : Editor {
         List<Move> loserMoves = new List<Move>();
         List<Move> moves = new List<Move>();
         Dictionary<string, Tile> freeTiles = new Dictionary<string, Tile>(); // Coord, Tile
-        
+
 
         // Restart the game with the new board size
-        manager.boardSize = size;
+        manager.EndGame();
         manager.GameBoard.AnimateBoard = false;
-        manager.ResetGame();
+        manager.StartGame(boardSize);
 
         // Compile a dictionary of tiles on the board
         foreach (Tile t in manager.GameBoard.board)
@@ -165,11 +165,11 @@ public class BoardDebugger : Editor {
 
         // Find winning moves
         // Column win
-        if (winconIndex < size) 
+        if (winconIndex < boardSize) 
         {
             // Select winning column
             int col = winconIndex;
-            for(int r = 0; r < size; r++)
+            for(int r = 0; r < boardSize; r++)
             {
                 // Create a move for the current winning tile
                 Move tempMove = new Move();
@@ -182,11 +182,11 @@ public class BoardDebugger : Editor {
             }
         }
         // Row win
-        else if(winconIndex < size*2)
+        else if(winconIndex < boardSize*2)
         {
             // Select winning row
-            int row  = winconIndex - size;
-            for(int c = 0; c < size; c++)
+            int row  = winconIndex - boardSize;
+            for(int c = 0; c < boardSize; c++)
             {
                 // Create a move for the current winning tile
                 Move tempMove = new Move();
@@ -202,8 +202,8 @@ public class BoardDebugger : Editor {
         else
         {
             // Select which diagonal | 0: top left => bottom right | 1: top right => bottom left |
-            int diag = winconIndex - size * 2;
-            for(int x = 0; x < size; x++)
+            int diag = winconIndex - boardSize * 2;
+            for(int x = 0; x < boardSize; x++)
             {
                 int y;
                 // Y = X for first diagonal
@@ -214,7 +214,7 @@ public class BoardDebugger : Editor {
                 // Invert Y for the second diagonal
                 else
                 {
-                    y = size - (x + 1);
+                    y = boardSize - (x + 1);
                 }
                 // Create a move for the current winning tile
                 Move tempMove = new Move();
@@ -233,11 +233,11 @@ public class BoardDebugger : Editor {
         int loserMoveCount;
         if(winner == Player.P1) 
         {
-            loserMoveCount = size - 1;  // P2 will move one less time whenever p1 wins
+            loserMoveCount = boardSize - 1;  // P2 will move one less time whenever p1 wins
         }
         else
         {
-            loserMoveCount = size;      // P1 gets to make the same number of moves
+            loserMoveCount = boardSize;      // P1 gets to make the same number of moves
         }
         // Convert the remaining tiles into a list for randomization
         List<Tile> loserPossibilities = new List<Tile>(freeTiles.Values);
@@ -300,7 +300,7 @@ public class BoardDebugger : Editor {
     private bool AreWinningMoves(List<Move> moveList)
     {
         // Cannot be winning moves if there are less than "size" moves
-        if(moveList.Count < size)
+        if(moveList.Count < boardSize)
         {
             return false;
         }
@@ -329,7 +329,7 @@ public class BoardDebugger : Editor {
                 isDiag1 = false;
             }
             // Check for second diagonal
-            if (moveList[i].tile.X != size - (moveList[i].tile.Y + 1) && isDiag2 == true)
+            if (moveList[i].tile.X != boardSize - (moveList[i].tile.Y + 1) && isDiag2 == true)
             {
                 isDiag2 = false;
             }
@@ -346,17 +346,16 @@ public class BoardDebugger : Editor {
         List<Move> p2Moves = new List<Move>();
 
         // Restart the game with the new board size
-        manager.boardSize = size;
-        manager.ResetGame();
+        manager.ResetGame(boardSize);
         Tile[,] board = manager.GameBoard.board;
 
         // Create a tie board
         Player lead = Player.P1;
-        for(int y = 0; y < size; y++)
+        for(int y = 0; y < boardSize; y++)
         {
             int toSwap = 2;
             Player active = lead;
-            for(int x = 0; x < size; x++)
+            for(int x = 0; x < boardSize; x++)
             {
                 // Swap players every 2 tiles. This creates a gridlock
                 if(toSwap == 0)
@@ -419,14 +418,14 @@ public class BoardDebugger : Editor {
     {
         switch(dBoard[x, y])
         {
-            case TileState.Empty:
+            case TileState.EMPTY:
                 dBoard[x, y] = TileState.P1;
                 break;
             case TileState.P1:
                 dBoard[x, y] = TileState.P2;
                 break;
             case TileState.P2:
-                dBoard[x, y] = TileState.Empty;
+                dBoard[x, y] = TileState.EMPTY;
                 break;
         }
     }
@@ -447,19 +446,19 @@ public class BoardDebugger : Editor {
     }
     private void ClearBoard()
     {
-        dBoard = new TileState[size, size];
-        for (int i = 0; i < size; i++)
+        dBoard = new TileState[boardSize, boardSize];
+        for (int i = 0; i < boardSize; i++)
         {
-            for (int j = 0; j < size; j++)
+            for (int j = 0; j < boardSize; j++)
             {
-                dBoard[i, j] = TileState.Empty;
+                dBoard[i, j] = TileState.EMPTY;
                 //Debug.Log(dBoard[i, j].ToString());
             }
         }
     }
     private void ResizeBoard(int newSize)
     {
-        size = newSize;
+        boardSize = newSize;
         ClearBoard();
     }
     private bool ValidateBoard()
@@ -494,29 +493,28 @@ public class BoardDebugger : Editor {
 
         if (ValidateBoard())
         {
-            manager.boardSize = size;
-            manager.ResetGame();
+            manager.ResetGame(boardSize);
 
             // Sort the board into two stacks of moves
             List<Move> p1Moves = new List<Move>();
             List<Move> p2Moves = new List<Move>();
             List<Move> moves = new List<Move>();
 
-            for (int i = 0; i < size; i++)
+            for (int i = 0; i < boardSize; i++)
             {
-                for (int j = 0; j < size; j++)
+                for (int j = 0; j < boardSize; j++)
                 {
                     if (dBoard[j, i] == TileState.P1)
                     {
                         Move move = new Move();
-                        move.tile = manager.GameBoard.board[j, size - (i + 1)];
+                        move.tile = manager.GameBoard.board[j, boardSize - (i + 1)];
                         move.player = Player.P1;
                         p1Moves.Add(move);
                     }
                     else if (dBoard[j, i] == TileState.P2)
                     {
                         Move move = new Move();
-                        move.tile = manager.GameBoard.board[j, size - (i + 1)];
+                        move.tile = manager.GameBoard.board[j, boardSize - (i + 1)];
                         move.player = Player.P2;
                         p2Moves.Add(move);
                     }

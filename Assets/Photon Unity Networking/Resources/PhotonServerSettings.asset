@@ -40,4 +40,6 @@ MonoBehaviour:
   - RPC_GameOver
   - RPC_MakeMove
   - RPC_SwitchTurns
+  - RPC_RequestRematch
+  - RPC_Rematch
   DisableAutoOpenWizard: 1
