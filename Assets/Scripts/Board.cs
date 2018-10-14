@@ -221,23 +221,28 @@ public class Board : MonoBehaviour {
 
     public bool MakeMove(Move move)
     {
-        // Check if the tile is already taken
-        if (move.tile.State == TileState.EMPTY)
+        if(!IsInBounds(boardState, move.X, move.Y))
         {
-            PlaceToken(move.tile, move.player);
-            List<Tile> captures = CheckForCaptures(move.tile, move.player);
+            return false;
+        }
+
+        Tile targetTile = board[move.X, move.Y];
+        // Check if the tile is already taken
+        if (targetTile.State == TileState.EMPTY)
+        {
+            PlaceToken(targetTile, move.player);
+            List<Tile> captures = CheckForCaptures(move);
             foreach(Tile t in captures)
             {
                 CaptureTile(t, move.player);
             }
             return true;
         }
-        // Tile is free!
         else
         {
-            if (move.tile.State == PlayerToState(move.player))
+            if (targetTile.State == PlayerToState(move.player))
             {
-                Debug.LogWarning("Cannot place token. Player already owns tile: (" + move.tile.X + "," + move.tile.Y + ")");
+                Debug.LogWarning("Cannot place token. Player already owns tile: (" + move.X + "," + move.Y + ")");
                 // TODO: Add UI feedback outside debug log
             }
             else
@@ -292,10 +297,10 @@ public class Board : MonoBehaviour {
         return CheckFull(boardState);
     }
 
-    public List<Tile> CheckForCaptures(Tile target, Player player)
+    public List<Tile> CheckForCaptures(Move move)
     {
         List<Tile> captures = new List<Tile>();
-        List<int[]> capturesCoords = FindCaptures(boardState, target.X, target.Y, player);
+        List<int[]> capturesCoords = FindCaptures(boardState, move);
         foreach(int[] c in capturesCoords)
         {
             captures.Add(board[c[0], c[1]]);
@@ -359,16 +364,16 @@ public class Board : MonoBehaviour {
         }
 
     }
-    public static TileState[,] MakeMove(TileState[,] boardState, int x, int y, Player player)
+    public static TileState[,] MakeMove(TileState[,] boardState, Move move)
     {
         TileState[,] newBoard = CloneBoardState(boardState);
-        if(newBoard[x, y] == TileState.EMPTY)
+        if(newBoard[move.X, move.Y] == TileState.EMPTY)
         {
-            newBoard[x, y] = PlayerToState(player);
-            List<int[]> captures = FindCaptures(newBoard, x, y, player);
+            newBoard[move.X, move.Y] = PlayerToState(move.player);
+            List<int[]> captures = FindCaptures(newBoard, move);
             foreach(int[] c in captures)
             {
-                newBoard[c[0], c[1]] = PlayerToState(player);
+                newBoard[c[0], c[1]] = PlayerToState(move.player);
             }
         }
         return newBoard;
@@ -603,7 +608,8 @@ public class Board : MonoBehaviour {
             
             if(IsInBounds(boardState, ax, ay) && IsInBounds(boardState, ox, oy))
             {
-                if(boardState[ax, ay] == PlayerToState(move.opponent) && boardState[ox, oy] == PlayerToState(move.opponent))
+                if((boardState[ax, ay] == PlayerToState(move.opponent) && boardState[ox, oy] == TileState.EMPTY) ||
+                   (boardState[ox, oy] == PlayerToState(move.opponent) && boardState[ax, ay] == TileState.EMPTY))
                 {
                     isVulnerable = true;
                 }
@@ -611,27 +617,19 @@ public class Board : MonoBehaviour {
         }
         return isVulnerable;
     }
-    public static List<int[]> FindCaptures(TileState[,] boardState, int x, int y, Player player)
+    public static List<int[]> FindCaptures(TileState[,] boardState, Move move)
     {
         List<int[]> captures = new List<int[]>();
-
-        // Set the opponent
-        Player opponent;
-        if (player == Player.P1)
-            opponent = Player.P2;
-        else
-            opponent = Player.P1;
-        //Debug.Log($"Checking capture on tile: ({target.X},{target.Y})");
         // Check each adjacent tile for the opponent's token
         foreach (Vector2 dir in directions)
         {
-            int ax = (int)(x + dir.x);
-            int ay = (int)(y + dir.y);
+            int ax = (int)(move.X + dir.x);
+            int ay = (int)(move.Y + dir.y);
             // Bounds check
             if (IsInBounds(boardState, ax, ay))
             {
                 //Debug.Log("Adj Tile: (" + adjTile.X + "," + adjTile.Y + ")");
-                if (boardState[ax, ay] == PlayerToState(opponent))
+                if (boardState[ax, ay] == PlayerToState(move.opponent))
                 {
                     // Check the next tile over
                     int a2x = ax + (int)dir.x;
@@ -639,7 +637,7 @@ public class Board : MonoBehaviour {
                     if (IsInBounds(boardState, a2x, a2y))
                     {
                         // If the next tile over is owned by this player, capture the tile between them
-                        if (boardState[a2x, a2y] == PlayerToState(player))
+                        if (boardState[a2x, a2y] == PlayerToState(move.player))
                         {
                             captures.Add(new int[2] { ax, ay });
                         }
@@ -650,6 +648,37 @@ public class Board : MonoBehaviour {
 
         return captures;
     }
+    public static List<int[]> FindBlockedCaptures(TileState[,] boardState, Move move)
+    {
+        List<int[]> blockedCaptures = new List<int[]>();
+        // Check each adjacent tile for the opponent's token
+        foreach (Vector2 dir in directions)
+        {
+            int ax = (int)(move.X + dir.x);
+            int ay = (int)(move.Y + dir.y);
+            // Bounds check
+            if (IsInBounds(boardState, ax, ay))
+            {
+                //Debug.Log("Adj Tile: (" + adjTile.X + "," + adjTile.Y + ")");
+                if (boardState[ax, ay] == PlayerToState(move.player))
+                {
+                    // Check the next tile over
+                    int a2x = ax + (int)dir.x;
+                    int a2y = ay + (int)dir.y;
+                    if (IsInBounds(boardState, a2x, a2y))
+                    {
+                        // If the next tile over is owned by this player, capture the tile between them
+                        if (boardState[a2x, a2y] == PlayerToState(move.opponent))
+                        {
+                            blockedCaptures.Add(new int[2] { ax, ay });
+                        }
+                    }
+                }
+            }
+        }
+
+        return blockedCaptures;
+    }
     public static List<int[]> FindWinningMoves(TileState[,] boardState, Player player)
     {
         List<int[]> winningMoves = new List<int[]>();
@@ -657,9 +686,10 @@ public class Board : MonoBehaviour {
         {
             for(int j = 0; j < boardState.GetLength(1); j++)
             {
+                Move move = new Move(i, j, player);
                 if(boardState[i,j] == TileState.EMPTY)
                 {
-                    TileState[,] newBoard = MakeMove(boardState, i, j, player);
+                    TileState[,] newBoard = MakeMove(boardState, move);
                     if(CheckPlayerWin(newBoard, player))
                     {
                         winningMoves.Add(new int[2] { i, j });

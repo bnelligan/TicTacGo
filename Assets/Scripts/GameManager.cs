@@ -282,17 +282,23 @@ public class GameManager : PunBehaviour {
     }
     public void MakeMove(Tile tile, Player player)
     {
-        //Debug.Log("Tile clicked: " + tile.name);
-        if (IsGameRunning && ActivePlayer == player)
+        Move move = new Move(tile.X, tile.Y, player);
+        MakeMove(move);
+    }
+    public void MakeMove(int x, int y, Player player)
+    {
+        Move move = new Move(x, y, player);
+        MakeMove(move);
+    }
+    public void MakeMove(Move move)
+    {
+        if (IsGameRunning && ActivePlayer == move.player)
         {
-            Move move = new Move();
             move.turn = turn;
-            move.tile = tile;
-            move.player = player;
             if (board.MakeMove(move))
             {
                 // Record move
-                Debug.Log("Turn: " + move.turn + " | Tile: (" + move.tile.X + "," + move.tile.Y + ") | Player: " + move.player.ToString());
+                Debug.Log("Turn: " + move.turn + " | Tile: (" + move.X + "," + move.Y + ") | Player: " + move.player.ToString());
                 MoveHistory.Add(move);
 
                 // Check if there is a winner
@@ -318,16 +324,6 @@ public class GameManager : PunBehaviour {
                 Debug.Log("Tile already taken.");
             }
         }
-
-    }
-    public void MakeMove(int x, int y, Player player)
-    {
-        Tile tile = board.board[x, y];
-        MakeMove(tile, player);
-    }
-    public void MakeMove(Move move)
-    {
-        MakeMove(move.tile, move.player);
     }
     public void MakeDelayedMoves(List<Move> moves)
     {
@@ -452,16 +448,17 @@ public class GameManager : PunBehaviour {
 
 public struct Move
 {
-    public Move(Tile t, Player p)
+    public Move(int x, int y, Player player)
     {
+        this.X = x;
+        this.Y = y;
+        
+        this.player = player;
         turn = 0;
-        tile = t;
-        player = p;
         score = 0;
     }
     public int turn;
     public int score;
-    public Tile tile;
     public Player player;
     public Player opponent
     {
@@ -475,8 +472,8 @@ public struct Move
                 return Player.NONE;
         }
     }
-    public int X { get { return tile.X; } }
-    public int Y { get { return tile.Y; } }
+    public int X;
+    public int Y;
 }
 
 

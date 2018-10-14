@@ -174,7 +174,8 @@ public class BoardDebugger : Editor {
                 // Create a move for the current winning tile
                 Move tempMove = new Move();
                 string mKey = col + "," + r;
-                tempMove.tile = freeTiles[mKey];
+                tempMove.X = freeTiles[mKey].X;
+                tempMove.Y = freeTiles[mKey].Y;
                 tempMove.player = winner;
                 winnerMoves.Add(tempMove);
                 // Remove tile from free list
@@ -191,7 +192,8 @@ public class BoardDebugger : Editor {
                 // Create a move for the current winning tile
                 Move tempMove = new Move();
                 string mKey = c + "," + row;
-                tempMove.tile = freeTiles[mKey];
+                tempMove.X = freeTiles[mKey].X;
+                tempMove.Y = freeTiles[mKey].Y;
                 tempMove.player = winner;
                 winnerMoves.Add(tempMove);
                 // Remove tile from free list
@@ -219,7 +221,8 @@ public class BoardDebugger : Editor {
                 // Create a move for the current winning tile
                 Move tempMove = new Move();
                 string mKey = x + "," + y;
-                tempMove.tile = freeTiles[mKey];
+                tempMove.X = freeTiles[mKey].X;
+                tempMove.Y = freeTiles[mKey].Y;
                 tempMove.player = winner;
                 winnerMoves.Add(tempMove);
                 // Remove tile from free list
@@ -246,7 +249,8 @@ public class BoardDebugger : Editor {
             // Choose a random tile
             int r = Random.Range(0, loserPossibilities.Count);
             Move tempMove = new Move();
-            tempMove.tile = loserPossibilities[r];
+            tempMove.X = loserPossibilities[r].X;
+            tempMove.Y = loserPossibilities[r].Y;
             tempMove.player = loser;
             loserPossibilities.RemoveAt(r);
             loserMoves.Add(tempMove);
@@ -255,16 +259,17 @@ public class BoardDebugger : Editor {
         // Check that the loser can't win on accident.
         if(AreWinningMoves(loserMoves))
         {
-            Debug.LogWarning("Loser could win! Replacing move to: (" + loserMoves[0].tile.X + "," + loserMoves[0].tile.Y + ")");
+            //Debug.LogWarning("Loser could win! Replacing move to: (" + loserMoves[0].tile.X + "," + loserMoves[0].tile.Y + ")");
             // Replace the first element with a new random move
             loserMoves.RemoveAt(0);
             int r = Random.Range(0, loserPossibilities.Count);
             Move tempMove = new Move();
-            tempMove.tile = loserPossibilities[r];
+            tempMove.X = loserPossibilities[r].X;
+            tempMove.Y = loserPossibilities[r].Y;
             tempMove.player = loser;
             loserPossibilities.RemoveAt(r);
             loserMoves.Add(tempMove);
-            Debug.LogWarning("Replacement move: (" + tempMove.tile.X + "," + tempMove.tile.Y + ")");
+            //Debug.LogWarning("Replacement move: (" + tempMove.tile.X + "," + tempMove.tile.Y + ")");
         }
         // Combine move lists by alternating them into a combined stack
         bool winnerTurn = true;
@@ -299,6 +304,8 @@ public class BoardDebugger : Editor {
     }
     private bool AreWinningMoves(List<Move> moveList)
     {
+        return false;
+        /*
         // Cannot be winning moves if there are less than "size" moves
         if(moveList.Count < boardSize)
         {
@@ -337,6 +344,7 @@ public class BoardDebugger : Editor {
 
         // If a flag is still true, these are winning moves
         return (isRow || isCol || isDiag1 || isDiag2);
+        */
     }
     private void TestTie()
     {
@@ -369,11 +377,11 @@ public class BoardDebugger : Editor {
                 // Create a move for the active player and tile
                 if(active == Player.P1)
                 {
-                    p1Moves.Add(new Move(board[x, y], active));
+                    p1Moves.Add(new Move(x, y, active));
                 }
                 else
                 {
-                    p2Moves.Add(new Move(board[x, y], active));
+                    p2Moves.Add(new Move(x, y, active));
                 }
                 toSwap--;
             }
@@ -506,16 +514,12 @@ public class BoardDebugger : Editor {
                 {
                     if (dBoard[j, i] == TileState.P1)
                     {
-                        Move move = new Move();
-                        move.tile = manager.GameBoard.board[j, boardSize - (i + 1)];
-                        move.player = Player.P1;
+                        Move move = new Move(j, boardSize - (i + 1), Player.P1);
                         p1Moves.Add(move);
                     }
                     else if (dBoard[j, i] == TileState.P2)
                     {
-                        Move move = new Move();
-                        move.tile = manager.GameBoard.board[j, boardSize - (i + 1)];
-                        move.player = Player.P2;
+                        Move move = new Move(j, boardSize - (i + 1), Player.P2);
                         p2Moves.Add(move);
                     }
                 }
@@ -532,7 +536,6 @@ public class BoardDebugger : Editor {
                         moves.Add(p1Moves[0]);
                         p1Moves.RemoveAt(0);
                     }
-
                 }
                 else
                 {
