@@ -21,11 +21,10 @@ public class GameManager : PunBehaviour {
     // Properties
     public bool IsInputEnabled { get; set; }
     public bool IsGameRunning { get; private set; }
-    public bool IsMyTurn { get { return ActivePlayer == LocalPlayer; } }
-    public bool IsBotTurn { get { return !IsMyTurn; } }
     public bool IsOnlineGame { get { return mode == GameMode.ONLINE; } }
     public bool IsLocalGame { get { return mode == GameMode.LOCAL; } }
     public bool IsBotGame { get { return mode == GameMode.BOT; } }
+    public bool IsSimulatedGame { get { return IsBotGame && options.IsSimulatedGame; } }
     public Board GameBoard { get { return board; } }
     public int BoardSize { get { return options.BoardSize; } }
     public GameHUD UI { get { return HUD; } }
@@ -34,8 +33,10 @@ public class GameManager : PunBehaviour {
         get {
             if (IsOnlineGame)
                 return PhotonNetwork.isMasterClient ? Player.P1 : Player.P2;
-            else if (IsBotGame)
+            else if (IsBotGame && !options.IsSimulatedGame)
                 return Player.P1;
+            else if (IsBotGame && options.IsSimulatedGame)
+                return Player.NONE;
             else
                 return ActivePlayer;
         }
@@ -52,7 +53,8 @@ public class GameManager : PunBehaviour {
     [SerializeField]
     GameHUD HUD;
     GameOptions options;
-    
+    Bot Bot1;
+    Bot Bot2;
 
     #region Start Logic
     // Use this for initialization
@@ -111,18 +113,26 @@ public class GameManager : PunBehaviour {
         turn = 1;
         IsGameRunning = true;
         IsInputEnabled = true;
-        if(RematchFlag)
+        
+        if(IsBotGame && !GetComponent<Bot>())
+        {
+            Bot1 = gameObject.AddComponent<Bot>();
+            Bot1.BotPlayer = Player.P2;
+            if (IsSimulatedGame)
+            {
+                Bot2 = Bot1.CloneAndMutate();
+                Bot2.BotPlayer = Player.P1;
+                board.AnimateBoard = false;
+            }
+        }
+        HUD.ShowCurrentTurn();
+        board.BuildBoard(BoardSize);
+        if (RematchFlag)
         {
             // Loser goes first in rematch
             SwitchTurns(ActivePlayer);
             RematchFlag = false;
         }
-        if(IsBotGame)
-        {
-            gameObject.AddComponent<Bot>();
-        }
-        HUD.ShowCurrentTurn();
-        board.BuildBoard(BoardSize);
     }
 
     public void StartGame(int size)
@@ -192,7 +202,7 @@ public class GameManager : PunBehaviour {
     public void OnClick_Tile(int x, int y)
     {
         Debug.Log("Clicked tile: (" + x + "," + y + ")");
-        if (IsMyTurn && IsGameRunning)
+        if (IsMyTurn(LocalPlayer) && IsGameRunning)
         {
             if (IsOnlineGame)
             {
@@ -220,15 +230,7 @@ public class GameManager : PunBehaviour {
     }
     private void SetFirstPlayer()
     {
-        if(IsLocalGame || IsBotGame)
-        {
-            ActivePlayer = RandomPlayer();
-        }
-        else if(IsOnlineGame)
-        {
-            // P1 is master client which is technically random
-            ActivePlayer = Player.P1;
-        }
+        ActivePlayer = Player.P1;
     }
     private void SetGameMode()
     {
@@ -244,9 +246,10 @@ public class GameManager : PunBehaviour {
         {
             mode = GameMode.LOCAL;
         }
-        Debug.Log("IsOnline=" + IsOnlineGame.ToString());
-        Debug.Log("IsBot=" + IsBotGame.ToString());
-        Debug.Log("IsLocal=" + IsLocalGame.ToString());
+        Debug.Log("IsOnline: " + IsOnlineGame.ToString());
+        Debug.Log("IsBot: " + IsBotGame.ToString());
+        Debug.Log("IsLocal: " + IsLocalGame.ToString());
+        Debug.Log("IsSimulated: " + IsSimulatedGame.ToString());
     }
     private void HandleInput()
     {
@@ -256,7 +259,7 @@ public class GameManager : PunBehaviour {
             if(hit)
             {
                 Tile hitTile = hit.collider.GetComponent<Tile>();
-                if(hitTile && IsMyTurn)
+                if(hitTile && IsMyTurn(LocalPlayer))
                 {
                     if(IsOnlineGame)
                     {
@@ -270,6 +273,31 @@ public class GameManager : PunBehaviour {
                 }
             }
         }
+        if(IsBotGame)
+        {
+            if(IsSimulatedGame)
+            {
+                if (ActivePlayer == Bot1.BotPlayer)
+                {
+                    Bot1.MakeMove();
+                }
+                else if (ActivePlayer == Bot2.BotPlayer)
+                {
+                    Bot2.MakeMove();
+                }
+            }
+            else
+            {
+                if(ActivePlayer == Bot1.BotPlayer)
+                {
+                    Bot1.MakeDelayedMove();
+                }
+            }
+        }
+    }
+    public bool IsMyTurn(Player player)
+    {
+        return ActivePlayer == player;
     }
     #endregion
 
@@ -377,6 +405,29 @@ public class GameManager : PunBehaviour {
         HUD.ShowWinner(winner);
         IsInputEnabled = false;
         IsGameRunning = false;
+
+        if(IsSimulatedGame)
+        {
+            
+            if (winner == Bot1.BotPlayer)
+            {
+                Destroy(Bot2);
+                Bot2 = Bot1.CloneAndMutate();
+                Bot2.BotPlayer = Bot1.OpponentPlayer;
+            }
+            else if(winner == Bot2.BotPlayer)
+            {
+                Destroy(Bot1);
+                Bot1 = Bot2.CloneAndMutate();
+                Bot1.BotPlayer = Bot2.OpponentPlayer;
+            }
+            StartCoroutine(IE_RestartAfterDelay(0f));
+        }
+    }
+    IEnumerator IE_RestartAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        ResetGame();
     }
     void TieGame()
     {

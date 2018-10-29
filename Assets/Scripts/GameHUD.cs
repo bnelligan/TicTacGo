@@ -54,9 +54,27 @@ public class GameHUD : MonoBehaviour {
         {
             TurnText = GetPlayerName(manager.ActivePlayer) + " Go!";
         }
-        else
+        else if(manager.IsSimulatedGame)
         {
-            TurnText = manager.IsMyTurn ? "Your Turn!" : "Opponent Turn...";
+            if (manager.IsMyTurn(Player.P1))
+            {
+                TurnText = "Bot1 Turn!";
+            }
+            else
+            {
+                TurnText = "Bot2 Turn!";
+            }
+        }
+        else if(manager.IsBotGame && manager.IsOnlineGame)
+        {
+            if (manager.IsMyTurn(manager.LocalPlayer))
+            {
+                TurnText = "Your Turn!";
+            }
+            else
+            {
+                TurnText = "Opponent Turn...";
+            }
         }
     }
     public void ShowTie()

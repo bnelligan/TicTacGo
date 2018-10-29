@@ -53,11 +53,11 @@ public class Board : MonoBehaviour {
         GetComponent<GridLayoutGroup>().constraintCount = size;
         GameManager mgr = FindObjectOfType<GameManager>();
 
-        board = new Tile[this.size, this.size];
-        boardState = new TileState[this.size, this.size];
-        for (int i = 0; i < this.size; i++)
+        board = new Tile[size, size];
+        boardState = new TileState[size, size];
+        for (int i = 0; i < size; i++)
         {
-            for (int j = 0; j < this.size; j++)
+            for (int j = 0; j < size; j++)
             {
                 // Create a new tile at the correct position, and add it to the board matrix
                 Tile newTile = Instantiate(tilePrefab, transform);

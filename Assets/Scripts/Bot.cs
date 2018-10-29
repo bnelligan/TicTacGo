@@ -6,56 +6,78 @@ public class Bot : MonoBehaviour {
 
     GameManager manager;
     Board board;
-    Player botPlayer { get { return manager.Opponent; } }
-    bool IsBotTurn { get { return manager.IsBotTurn && manager.IsInputEnabled; } }
+    public Player BotPlayer = Player.P1;
+    public Player OpponentPlayer { get { return BotPlayer == Player.P1 ? Player.P2 : Player.P1; } }
     bool MakingMove;
 
     float MinTurnDelay = 3f;
-    float MaxTurnDelay = 5f;    
+    float MaxTurnDelay = 5f;
+    public int MutationRange = 10;
+    List<MoveFactor> factors;
 
-	// Use this for initialization
-	void Start () {
+    // Use this for initialization
+    private void Awake()
+    {
+        factors = GetNewFactorList();
+    }
+    void Start () {
         manager = FindObjectOfType<GameManager>();
         board = manager.GameBoard;
         MakingMove = false;
 	}
-	
-	// Update is called once per frame
-	void Update () {
-        if (IsBotTurn && !MakingMove)
-        {
-            MakingMove = true;
-            StartCoroutine(MakeMove());
-        }
-	}
-    IEnumerator MakeMove()
+    IEnumerator IE_MakeDelayedMove()
     {
         Debug.Log("Thinking...");
         MakingMove = true;
         WaitForSeconds TurnDelay = new WaitForSeconds(Random.Range(MinTurnDelay, MaxTurnDelay));
         yield return TurnDelay;
-        List<Move> possibleMoves = GetPossibleMoves();
-        for (int m = 0; m < possibleMoves.Count; m++)
+        MakeMove();
+    }
+    public void MakeDelayedMove()
+    {
+        if(!MakingMove)
         {
-            Move move = possibleMoves[m];
-            ScoreMove(ref move);
-            possibleMoves[m] = move;
-            yield return new WaitForEndOfFrame();
+            StartCoroutine(IE_MakeDelayedMove());
         }
-        Move bestMove = GetBestMove(possibleMoves);
-        Debug.Log("Best move found at (" + bestMove.X + "," + bestMove.Y + " ) score=" + bestMove.score);
-        manager.MakeMove(bestMove);
-        MakingMove = false;
+    }
+    public void MakeMove()
+    {
+        if(!MakingMove)
+        {
+            MakingMove = true;
+            List<Move> possibleMoves = GetPossibleMoves();
+            for (int m = 0; m < possibleMoves.Count; m++)
+            {
+                Move move = possibleMoves[m];
+                ScoreMove(ref move);
+                possibleMoves[m] = move;
+            }
+            Move bestMove = GetBestMove(possibleMoves);
+            Debug.Log("Best move found at (" + bestMove.X + "," + bestMove.Y + " ) score=" + bestMove.score);
+            manager.MakeMove(bestMove);
+            MakingMove = false;
+        }
+        
+    }
+    public Bot CloneAndMutate()
+    {
+        Bot clone = gameObject.AddComponent<Bot>();
+        clone.SetFactors(GetMutatedFactors());
+        return clone;
     }
 
     List<Move> GetPossibleMoves()
     {
+        if (factors == null)
+        {
+            factors = GetNewFactorList();
+        }
         List<Move> possibleMoves = new List<Move>();
         foreach(Tile tile in board.board)
         {
             if(tile.State == TileState.EMPTY)
             {
-                Move possibleMove = new Move(tile.X, tile.Y, botPlayer);
+                Move possibleMove = new Move(tile.X, tile.Y, BotPlayer);
                 possibleMoves.Add(possibleMove);
             }
         }
@@ -63,13 +85,12 @@ public class Bot : MonoBehaviour {
     }
     void ScoreMove(ref Move move)
     {
-        List<MoveFactor> factors = GetFactorList();
         foreach(MoveFactor f in factors)
         {
             f.CalcFactor(board.boardState, ref move);
         }
     }
-    List<MoveFactor> GetFactorList()
+    List<MoveFactor> GetNewFactorList()
     {
         List<MoveFactor> factorList = new List<MoveFactor>();
 
@@ -85,16 +106,38 @@ public class Bot : MonoBehaviour {
 
         return factorList;
     }
+    List<MoveFactor> GetMutatedFactors()
+    {
+        List<MoveFactor> mutatedFactors = new List<MoveFactor>();
+        Debug.LogWarning("Mutating factors by " + MutationRange + " for bot: " + BotPlayer.ToString());
+        foreach(MoveFactor f in factors)
+        {
+            mutatedFactors.Add(f.MutateFactor(MutationRange));
+        }
+        return mutatedFactors;
+    }
+    public void SetFactors(List<MoveFactor> newFactors)
+    {
+        factors = newFactors;
+    }
+    
     Move GetBestMove(List<Move> moves)
     {
         List<Move> bestMoves = new List<Move>();
         int bestScore = 0;
+        bool firstFlag = true;
         foreach(Move m in moves)
         {
-            Debug.Log("Move " + m.X + "," + m.Y + " Score=" + m.score);
+            if (firstFlag)
+            {
+                bestScore = m.score;
+                firstFlag = false;
+            }
+
+            //Debug.Log("Move " + m.X + "," + m.Y + " Score=" + m.score);
             if(m.score >= bestScore)
             {
-                Debug.Log("New best move! Score: " + bestScore);
+                // Debug.Log("New best move! Score: " + bestScore);
                 if(m.score != bestScore)
                 {
                     bestMoves.Clear();
@@ -104,6 +147,7 @@ public class Bot : MonoBehaviour {
             }
         }
         int randIdx = Mathf.FloorToInt(Random.Range(0, bestMoves.Count));
+        //Debug.Log("Best Move Index: " + randIdx);
         return bestMoves[randIdx];
     }
     
@@ -115,13 +159,20 @@ public abstract class MoveFactor
     public int Score = 0;
 
     public abstract void CalcFactor(TileState[,] board, ref Move move);
+    public virtual MoveFactor MutateFactor(int mutationRange)
+    {
+        MoveFactor factor = (MoveFactor)MemberwiseClone();
+        factor.Score += Random.Range(-mutationRange/2, mutationRange);
+        Debug.Log(GetType() + ": " + Score + "=>" + factor.Score);
+        return factor;
+    }
 }
 
 public class WinFactor : MoveFactor
 {
     public WinFactor()
     {
-        Score = 1000;
+        Score = 0; //1000;
     }
 
     public override void CalcFactor(TileState[,] board, ref Move move)
@@ -130,9 +181,9 @@ public class WinFactor : MoveFactor
         List<int[]> winningTiles;
         if (move.player == Board.GetWinner(newBoard, out winningTiles))
         {
-            Debug.Log("Adding " + GetType().ToString() + " to move: " + move);
+            //Debug.Log("Adding " + GetType().ToString() + " to move: " + move);
             move.score += Score;
-            Debug.Log("Move(" + move.X + "," + move.Y + ")" + "score: " + move.score);
+            //Debug.Log("Move(" + move.X + "," + move.Y + ")" + "score: " + move.score);
         }
 
     }
@@ -141,16 +192,16 @@ public class CaptureFactor : MoveFactor
 {
     public CaptureFactor()
     {
-        Score = 50;
+        Score = 0; //50;
     }
     public override void CalcFactor(TileState[,] board, ref Move move)
     {
         List<int[]> captures = Board.FindCaptures(board, move);
         for (int c = 0; c < captures.Count; c++)
         {
-            Debug.Log("Adding " + GetType().ToString() + " to move: " + move);
+            //Debug.Log("Adding " + GetType().ToString() + " to move: " + move);
             move.score += Score;
-            Debug.Log("Move(" + move.X + "," + move.Y + ")" + "score: " + move.score);
+            //Debug.Log("Move(" + move.X + "," + move.Y + ")" + "score: " + move.score);
         }
     }
 }
@@ -158,7 +209,7 @@ public class BlockCaptureFactor : MoveFactor
 {
     public BlockCaptureFactor()
     {
-        Score = 30;
+        Score = 0; //25;
     }
 
     public override void CalcFactor(TileState[,] board, ref Move move)
@@ -166,9 +217,9 @@ public class BlockCaptureFactor : MoveFactor
         List<int[]> blockedCaptures = Board.FindBlockedCaptures(board, move);
         for (int c = 0; c < blockedCaptures.Count; c++)
         {
-            Debug.Log("Adding " + GetType().ToString() + " to move: " + move);
+            //Debug.Log("Adding " + GetType().ToString() + " to move: " + move);
             move.score += Score;
-            Debug.Log("Move(" + move.X + "," + move.Y + ")" +  "score: " + move.score);
+            //Debug.Log("Move(" + move.X + "," + move.Y + ")" +  "score: " + move.score);
         }
     }
 }
@@ -177,7 +228,7 @@ public class BlockLossFactor : MoveFactor
 {
     public BlockLossFactor()
     {
-        Score = 500;
+        Score = 0; //500;
     }
     public override void CalcFactor(TileState[,] board, ref Move move)
     {
@@ -185,9 +236,9 @@ public class BlockLossFactor : MoveFactor
         TileState[,] newboard = Board.MakeMove(board, oppMove);
         if(Board.CheckPlayerWin(newboard, move.opponent))
         {
-            Debug.Log("Adding " + GetType().ToString() + " to move: " + move);
+            //Debug.Log("Adding " + GetType().ToString() + " to move: " + move);
             move.score += Score;
-            Debug.Log("Move(" + move.X + "," + move.Y + ")" + "score: " + move.score);
+            //Debug.Log("Move(" + move.X + "," + move.Y + ")" + "score: " + move.score);
         }
     }
 }
@@ -195,15 +246,15 @@ public class CornerFactor : MoveFactor
 {
     public CornerFactor()
     {
-        Score = 100;
+        Score = 0; //100;
     }
     public override void CalcFactor(TileState[,] board, ref Move move)
     {
         if(Board.IsCornerTile(board, move.X, move.Y))
         {
-            Debug.Log("Adding " + GetType().ToString() + " to move: " + move);
+            //Debug.Log("Adding " + GetType().ToString() + " to move: " + move);
             move.score += Score;
-            Debug.Log("Move(" + move.X + "," + move.Y + ")" + "score: " + move.score);
+            //Debug.Log("Move(" + move.X + "," + move.Y + ")" + "score: " + move.score);
         }
     }
 }
@@ -211,24 +262,24 @@ public class EdgeFactor : MoveFactor
 {
     public EdgeFactor()
     {
-        Score = 15;
+        Score = 0; //15;
     }
 
     public override void CalcFactor(TileState[,] board, ref Move move)
     { 
         if(Board.IsEdgeTile(board, move.X, move.Y))
         {
-            Debug.Log("Adding " + GetType().ToString() + " to move: " + move);
+            //Debug.Log("Adding " + GetType().ToString() + " to move: " + move);
             move.score += Score;
-            Debug.Log("Move(" + move.X + "," + move.Y + ")" + "score: " + move.score);
+            //Debug.Log("Move(" + move.X + "," + move.Y + ")" + "score: " + move.score);
         }
     }
 }
 public class AdjacencyFactor : MoveFactor
 {
-    int emptyScore = 7;
-    int friendlyScore = 15;
-    int enemyScore = 10;
+    public int emptyScore = 0; //7;
+    public int friendlyScore = 0; //15;
+    public int enemyScore = 0; //10;
 
     public AdjacencyFactor() { }
 
@@ -237,7 +288,7 @@ public class AdjacencyFactor : MoveFactor
         List<int[]> adjCoords = Board.FindAdjacent(board, move.X, move.Y);
         foreach (int[] c in adjCoords)
         {
-            Debug.Log("Adding " + GetType().ToString() + " to move: " + move);
+            //Debug.Log("Adding " + GetType().ToString() + " to move: " + move);
             TileState t = board[c[0], c[1]];
             if (t == Board.PlayerToState(move.player))
             {
@@ -251,24 +302,35 @@ public class AdjacencyFactor : MoveFactor
             {
                 move.score += emptyScore;
             }
-            Debug.Log("Move(" + move.X + "," + move.Y + ")" + "score: " + move.score);
+            //Debug.Log("Move(" + move.X + "," + move.Y + ")" + "score: " + move.score);
         }
+    }
+    public override MoveFactor MutateFactor(int mutationRange)
+    {
+        AdjacencyFactor mutatedFactor = new AdjacencyFactor();
+        mutatedFactor.emptyScore = emptyScore + Random.Range(-mutationRange/2, mutationRange);
+        Debug.Log("AdjEmpty: " + emptyScore + "=>" + mutatedFactor.emptyScore);
+        mutatedFactor.enemyScore = enemyScore + Random.Range(-mutationRange/2, mutationRange);
+        Debug.Log("AdjEnemy: " + enemyScore + "=>" + mutatedFactor.enemyScore);
+        mutatedFactor.friendlyScore = friendlyScore + Random.Range(-mutationRange/2, mutationRange);
+        Debug.Log("AdjFriendly: " + friendlyScore + "=>" + mutatedFactor.friendlyScore);
+        return mutatedFactor;
     }
 }
 public class VulnerabilityFactor : MoveFactor
 {
     public VulnerabilityFactor()
     {
-        Score = -50;
+        Score = 0; //-50;
     }
 
     public override void CalcFactor(TileState[,] board, ref Move move)
     {
         if(Board.IsVulnerableMove(board, move))
         {
-            Debug.Log("Adding " + GetType().ToString() + " to move: " + move);
+            //Debug.Log("Adding " + GetType().ToString() + " to move: " + move);
             move.score += Score;
-            Debug.Log("Move(" + move.X + "," + move.Y + ")" + "score: " + move.score);
+            //Debug.Log("Move(" + move.X + "," + move.Y + ")" + "score: " + move.score);
         }
     }
 }
@@ -276,16 +338,16 @@ public class OpponentVulnerabilityFactor : MoveFactor
 {
     public OpponentVulnerabilityFactor()
     {
-        Score = -40;
+        Score = 0; //-30;
     }
     public override void CalcFactor(TileState[,] board, ref Move move)
     {
         Move oppMove = new Move(move.X, move.Y, move.opponent);
         if(Board.IsVulnerableMove(board, oppMove))
         {
-            Debug.Log("Adding " + GetType().ToString() + " to move: " + move);
+            //Debug.Log("Adding " + GetType().ToString() + " to move: " + move);
             move.score += Score;
-            Debug.Log("Move(" + move.X + "," + move.Y + ")" + "score: " + move.score);
+            //Debug.Log("Move(" + move.X + "," + move.Y + ")" + "score: " + move.score);
         }
     }
 }

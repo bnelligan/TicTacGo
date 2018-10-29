@@ -1627,6 +1627,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   IsBotGame: 0
   IsOnlineGame: 0
+  IsSimulatedGame: 1
   BoardSize: 4
 --- !u!114 &1499653601
 MonoBehaviour:
