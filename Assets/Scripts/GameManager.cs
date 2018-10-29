@@ -421,7 +421,7 @@ public class GameManager : PunBehaviour {
                 Bot1 = Bot2.CloneAndMutate();
                 Bot1.BotPlayer = Bot2.OpponentPlayer;
             }
-            StartCoroutine(IE_RestartAfterDelay(0f));
+            StartCoroutine(IE_RestartAfterDelay(.1f));
         }
     }
     IEnumerator IE_RestartAfterDelay(float delay)
