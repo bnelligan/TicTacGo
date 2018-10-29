@@ -325,6 +325,10 @@ public class Board : MonoBehaviour {
 
     public void HighlightTiles(List<Tile> tiles)
     {
+        if(tiles.Count > size)
+        {
+            Debug.LogWarning("Abnormal Tile Highlight!!");
+        }
         foreach (Tile t in board)
         { 
             if (!tiles.Contains(t))

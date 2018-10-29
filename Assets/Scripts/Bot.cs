@@ -87,18 +87,24 @@ public class Bot : MonoBehaviour {
     }
     Move GetBestMove(List<Move> moves)
     {
-        Move bestMove = new Move();
-        bestMove.score = 0;
+        List<Move> bestMoves = new List<Move>();
+        int bestScore = 0;
         foreach(Move m in moves)
         {
             Debug.Log("Move " + m.X + "," + m.Y + " Score=" + m.score);
-            if(m.score >= bestMove.score)
+            if(m.score >= bestScore)
             {
-                Debug.Log("New best move!");
-                bestMove = m;
+                Debug.Log("New best move! Score: " + bestScore);
+                if(m.score != bestScore)
+                {
+                    bestMoves.Clear();
+                }
+                bestMoves.Add(m);
+                bestScore = m.score;
             }
         }
-        return bestMove;
+        int randIdx = Mathf.FloorToInt(Random.Range(0, bestMoves.Count));
+        return bestMoves[randIdx];
     }
     
 }
@@ -152,7 +158,7 @@ public class BlockCaptureFactor : MoveFactor
 {
     public BlockCaptureFactor()
     {
-        Score = 40;
+        Score = 30;
     }
 
     public override void CalcFactor(TileState[,] board, ref Move move)
@@ -270,12 +276,12 @@ public class OpponentVulnerabilityFactor : MoveFactor
 {
     public OpponentVulnerabilityFactor()
     {
-        Score = -50;
+        Score = -40;
     }
     public override void CalcFactor(TileState[,] board, ref Move move)
     {
         Move oppMove = new Move(move.X, move.Y, move.opponent);
-        if(Board.IsVulnerableMove(board,oppMove))
+        if(Board.IsVulnerableMove(board, oppMove))
         {
             Debug.Log("Adding " + GetType().ToString() + " to move: " + move);
             move.score += Score;
