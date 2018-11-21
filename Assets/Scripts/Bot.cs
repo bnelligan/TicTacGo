@@ -18,7 +18,7 @@ public class Bot : MonoBehaviour {
     // Use this for initialization
     private void Awake()
     {
-        factors = GetNewFactorList();
+        factors = NewFactorList();
     }
     void Start () {
         manager = FindObjectOfType<GameManager>();
@@ -70,7 +70,7 @@ public class Bot : MonoBehaviour {
     {
         if (factors == null)
         {
-            factors = GetNewFactorList();
+            factors = NewFactorList();
         }
         List<Move> possibleMoves = new List<Move>();
         foreach(Tile tile in board.board)
@@ -90,19 +90,20 @@ public class Bot : MonoBehaviour {
             f.CalcFactor(board.boardState, ref move);
         }
     }
-    List<MoveFactor> GetNewFactorList()
+    List<MoveFactor> NewFactorList()
     {
-        List<MoveFactor> factorList = new List<MoveFactor>();
-
-        factorList.Add(new WinFactor());
-        factorList.Add(new CaptureFactor());
-        factorList.Add(new BlockCaptureFactor());
-        factorList.Add(new BlockLossFactor());
-        factorList.Add(new CornerFactor());
-        factorList.Add(new EdgeFactor());
-        factorList.Add(new AdjacencyFactor());
-        factorList.Add(new VulnerabilityFactor());
-        factorList.Add(new OpponentVulnerabilityFactor());
+        List<MoveFactor> factorList = new List<MoveFactor>
+        {
+            new WinFactor(),
+            new CaptureFactor(),
+            new BlockCaptureFactor(),
+            new BlockLossFactor(),
+            new CornerFactor(),
+            new EdgeFactor(),
+            new AdjacencyFactor(),
+            new VulnerabilityFactor(),
+            new OpponentVulnerabilityFactor()
+        };
 
         return factorList;
     }

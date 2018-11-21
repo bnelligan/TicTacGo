@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class OptionsMenu : MonoBehaviour, Menu {
+public class OptionsMenu : MonoBehaviour, IScreen {
 
     [SerializeField] Toggle SmallToggle;
     [SerializeField] Toggle MediumToggle;
     [SerializeField] Toggle LargeToggle;
     
     GameOptions options;
-    Menu mainMenu;
+    IScreen mainMenu;
     private void Awake()
     {
         mainMenu = FindObjectOfType<MainMenu>();

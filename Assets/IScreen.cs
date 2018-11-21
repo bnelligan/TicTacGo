@@ -4,6 +4,6 @@ using UnityEngine;
 
 public interface IScreen
 {
-    void OnScreenLoad();
-    void OnScreenExit();
+    void Show();
+    void Hide();
 }

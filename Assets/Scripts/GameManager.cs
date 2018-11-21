@@ -53,8 +53,8 @@ public class GameManager : PunBehaviour {
     [SerializeField]
     GameHUD HUD;
     GameOptions options;
-    Bot Bot1;
-    Bot Bot2;
+    BotManager botManager;
+    Bot bot;
 
     #region Start Logic
     // Use this for initialization
@@ -114,16 +114,9 @@ public class GameManager : PunBehaviour {
         IsGameRunning = true;
         IsInputEnabled = true;
         
-        if(IsBotGame && !GetComponent<Bot>())
+        if(IsBotGame)
         {
-            Bot1 = gameObject.AddComponent<Bot>();
-            Bot1.BotPlayer = Player.P2;
-            if (IsSimulatedGame)
-            {
-                Bot2 = Bot1.CloneAndMutate();
-                Bot2.BotPlayer = Player.P1;
-                board.AnimateBoard = false;
-            }
+            botManager.StartGame();
         }
         HUD.ShowCurrentTurn();
         board.BuildBoard(BoardSize);
@@ -273,27 +266,6 @@ public class GameManager : PunBehaviour {
                 }
             }
         }
-        if(IsBotGame)
-        {
-            if(IsSimulatedGame)
-            {
-                if (ActivePlayer == Bot1.BotPlayer)
-                {
-                    Bot1.MakeMove();
-                }
-                else if (ActivePlayer == Bot2.BotPlayer)
-                {
-                    Bot2.MakeMove();
-                }
-            }
-            else
-            {
-                if(ActivePlayer == Bot1.BotPlayer)
-                {
-                    Bot1.MakeDelayedMove();
-                }
-            }
-        }
     }
     public bool IsMyTurn(Player player)
     {
@@ -408,19 +380,8 @@ public class GameManager : PunBehaviour {
 
         if(IsSimulatedGame)
         {
-            
-            if (winner == Bot1.BotPlayer)
-            {
-                Destroy(Bot2);
-                Bot2 = Bot1.CloneAndMutate();
-                Bot2.BotPlayer = Bot1.OpponentPlayer;
-            }
-            else if(winner == Bot2.BotPlayer)
-            {
-                Destroy(Bot1);
-                Bot1 = Bot2.CloneAndMutate();
-                Bot1.BotPlayer = Bot2.OpponentPlayer;
-            }
+
+            botManager.GameOver(winner);
             StartCoroutine(IE_RestartAfterDelay(.1f));
         }
     }

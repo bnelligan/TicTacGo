@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class MainMenu : Photon.MonoBehaviour , Menu{
+public class MainMenu : Photon.MonoBehaviour , IScreen{
     private string GameScene = "Game";
     GameOptions options;
-    Menu optionsMenu;
+    IScreen optionsMenu;
 
     private void Awake()
     {
