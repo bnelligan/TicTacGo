@@ -638,7 +638,10 @@ PlayerSettings:
   webGLUseEmbeddedResources: 0
   webGLCompressionFormat: 1
   webGLLinkerTarget: 1
-  scriptingDefineSymbols: {}
+  scriptingDefineSymbols:
+    1: USE_GETSOCIAL_UI
+    4: USE_GETSOCIAL_UI
+    7: USE_GETSOCIAL_UI
   platformArchitecture: {}
   scriptingBackend: {}
   il2cppCompilerConfiguration: {}
