@@ -17,6 +17,7 @@ public class BotManager : MonoBehaviour {
 	void Start () {
         AvailableBots = new List<Bot>();
         AliveBots = new List<Bot>();
+        options = FindObjectOfType<GameOptions>();
         if(options.IsSimulatedGame)
         {
             P1Bot = new Bot();
@@ -26,7 +27,7 @@ public class BotManager : MonoBehaviour {
         }
         else if(options.IsBotGame)
         {
-
+            P2Bot.BotPlayer = Player.P2;
         }
         
 	}
@@ -43,7 +44,7 @@ public class BotManager : MonoBehaviour {
     {
 
     }
-    public void GameOver( Player winner)
+    public void GameOver(Player winner)
     {
         if (winner == Player.P1)
         {

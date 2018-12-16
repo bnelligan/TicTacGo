@@ -71,8 +71,8 @@ public class Board : MonoBehaviour {
                 newTile.State = TileState.EMPTY;
                 newTile.GetComponent<Button>().onClick.AddListener(delegate { mgr.OnClick_Tile(newTile.X, newTile.Y); });
                 // If the board is being animated, hide the tiles as they are made
-                if(AnimateBoard)
-                    newTile.GetComponent<SpriteRenderer>().enabled = false;
+                if (AnimateBoard)
+                    newTile.GetComponent<Image>().enabled = false;
             }
         }
         if (AnimateBoard == true)
@@ -100,7 +100,7 @@ public class Board : MonoBehaviour {
         bool canMove = true;
         while (canMove)
         {
-            board[x, y].GetComponent<SpriteRenderer>().enabled = true;
+            board[x, y].GetComponent<Image>().enabled = true;
             yield return new WaitForSeconds(buildDelay);
             // Check if we should change direction
             switch (dir)
@@ -110,7 +110,7 @@ public class Board : MonoBehaviour {
                     {
                         TurnLeft(ref dir);
                     }
-                    else if (board[x + 1, y].GetComponent<SpriteRenderer>().enabled == true)
+                    else if (board[x + 1, y].GetComponent<Image>().enabled == true)
                     {
                         TurnLeft(ref dir);
                     }
@@ -120,7 +120,7 @@ public class Board : MonoBehaviour {
                     {
                         TurnLeft(ref dir);
                     }
-                    else if (board[x, y + 1].GetComponent<SpriteRenderer>().enabled == true)
+                    else if (board[x, y + 1].GetComponent<Image>().enabled == true)
                     {
                         TurnLeft(ref dir);
                     }
@@ -130,7 +130,7 @@ public class Board : MonoBehaviour {
                     {
                         TurnLeft(ref dir);
                     }
-                    else if (board[x - 1, y].GetComponent<SpriteRenderer>().enabled == true)
+                    else if (board[x - 1, y].GetComponent<Image>().enabled == true)
                     {
                         TurnLeft(ref dir);
                     }
@@ -140,7 +140,7 @@ public class Board : MonoBehaviour {
                     {
                         TurnLeft(ref dir);
                     }
-                    else if (board[x, y - 1].GetComponent<SpriteRenderer>().enabled == true)
+                    else if (board[x, y - 1].GetComponent<Image>().enabled == true)
                     {
                         TurnLeft(ref dir);
                     }
@@ -169,7 +169,7 @@ public class Board : MonoBehaviour {
                 canMove = false;
             }
             // Check if we hit a dead end after turning
-            else if(board[x, y].GetComponent<SpriteRenderer>().enabled == true)
+            else if(board[x, y].GetComponent<Image>().enabled == true)
             {
                 canMove = false;
             }

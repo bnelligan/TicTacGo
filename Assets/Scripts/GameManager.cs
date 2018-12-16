@@ -234,6 +234,7 @@ public class GameManager : PunBehaviour {
         else if(options.IsBotGame)
         {
             mode = GameMode.BOT;
+            botManager = gameObject.AddComponent<BotManager>();
         }
         else
         {
