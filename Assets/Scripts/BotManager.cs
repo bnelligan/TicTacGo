@@ -32,17 +32,13 @@ public class BotManager : MonoBehaviour {
         
 	}
 	
-	// Update is called once per frame
-	void Update () {
-		
-	}
     public void StartGame()
     {
 
     }
     public void MakeMove()
     {
-
+        
     }
     public void GameOver(Player winner)
     {
