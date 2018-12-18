@@ -45,18 +45,18 @@ public class Bot : MonoBehaviour {
         if(!MakingMove)
         {
             MakingMove = true;
-            List<Move> possibleMoves = GetPossibleMoves();
-            for (int m = 0; m < possibleMoves.Count; m++)
-            {
-                Move move = possibleMoves[m];
-                ScoreMove(ref move);
-                possibleMoves[m] = move;
-            }
-            Move bestMove = GetBestMove(possibleMoves);
-            Debug.Log("Best move found at (" + bestMove.X + "," + bestMove.Y + " ) score=" + bestMove.score);
-            manager.MakeMove(bestMove);
-            MakingMove = false;
         }
+        List<Move> possibleMoves = GetPossibleMoves();
+        for (int m = 0; m < possibleMoves.Count; m++)
+        {
+            Move move = possibleMoves[m];
+            ScoreMove(ref move);
+            possibleMoves[m] = move;
+        }
+        Move bestMove = GetBestMove(possibleMoves);
+        Debug.Log("Best move found at (" + bestMove.X + "," + bestMove.Y + " ) score=" + bestMove.score);
+        manager.MakeMove(bestMove);
+        MakingMove = false;
         
     }
     public Bot CloneAndMutate()
@@ -173,7 +173,7 @@ public class WinFactor : MoveFactor
 {
     public WinFactor()
     {
-        Score = 0; //1000;
+        Score = 1000;
     }
 
     public override void CalcFactor(TileState[,] board, ref Move move)
@@ -193,7 +193,7 @@ public class CaptureFactor : MoveFactor
 {
     public CaptureFactor()
     {
-        Score = 0; //50;
+        Score = 50;
     }
     public override void CalcFactor(TileState[,] board, ref Move move)
     {
@@ -210,7 +210,7 @@ public class BlockCaptureFactor : MoveFactor
 {
     public BlockCaptureFactor()
     {
-        Score = 0; //25;
+        Score = 25;
     }
 
     public override void CalcFactor(TileState[,] board, ref Move move)
@@ -229,7 +229,7 @@ public class BlockLossFactor : MoveFactor
 {
     public BlockLossFactor()
     {
-        Score = 0; //500;
+        Score = 500;
     }
     public override void CalcFactor(TileState[,] board, ref Move move)
     {
@@ -247,7 +247,7 @@ public class CornerFactor : MoveFactor
 {
     public CornerFactor()
     {
-        Score = 0; //100;
+        Score = 100;
     }
     public override void CalcFactor(TileState[,] board, ref Move move)
     {
@@ -263,7 +263,7 @@ public class EdgeFactor : MoveFactor
 {
     public EdgeFactor()
     {
-        Score = 0; //15;
+        Score = 15;
     }
 
     public override void CalcFactor(TileState[,] board, ref Move move)
@@ -278,9 +278,9 @@ public class EdgeFactor : MoveFactor
 }
 public class AdjacencyFactor : MoveFactor
 {
-    public int emptyScore = 0; //7;
-    public int friendlyScore = 0; //15;
-    public int enemyScore = 0; //10;
+    public int emptyScore = 7;
+    public int friendlyScore = 15;
+    public int enemyScore = 10;
 
     public AdjacencyFactor() { }
 
@@ -322,7 +322,7 @@ public class VulnerabilityFactor : MoveFactor
 {
     public VulnerabilityFactor()
     {
-        Score = 0; //-50;
+        Score = -50;
     }
 
     public override void CalcFactor(TileState[,] board, ref Move move)
@@ -339,7 +339,7 @@ public class OpponentVulnerabilityFactor : MoveFactor
 {
     public OpponentVulnerabilityFactor()
     {
-        Score = 0; //-30;
+        Score = -30;
     }
     public override void CalcFactor(TileState[,] board, ref Move move)
     {

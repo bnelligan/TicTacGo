@@ -357,6 +357,11 @@ public class GameManager : PunBehaviour {
         {
             ActivePlayer = Player.P1;
         }
+        // Notify bot manager
+        if(IsBotGame)
+        {
+            botManager.NotifyTurn(ActivePlayer);
+        }
         // Update the UI
         HUD.ShowCurrentTurn();
     }

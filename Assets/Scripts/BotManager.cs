@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class BotManager : MonoBehaviour {
-
-    private Bot ActiveBot;
+    
     private Bot P1Bot;
     private Bot P2Bot;
     private List<Bot> AvailableBots;
@@ -20,13 +19,14 @@ public class BotManager : MonoBehaviour {
         options = FindObjectOfType<GameOptions>();
         if(options.IsSimulatedGame)
         {
-            P1Bot = new Bot();
+            P1Bot = gameObject.AddComponent<Bot>();
             P1Bot.BotPlayer = Player.P1;
-            P2Bot = new Bot();
+            P2Bot = gameObject.AddComponent<Bot>();
             P2Bot.BotPlayer = Player.P2;
         }
-        else if(options.IsBotGame)
+        else if(options.IsBotGame && P2Bot == null)
         {
+            P2Bot = gameObject.AddComponent<Bot>();
             P2Bot.BotPlayer = Player.P2;
         }
         
@@ -55,9 +55,26 @@ public class BotManager : MonoBehaviour {
             P1Bot.BotPlayer = P2Bot.OpponentPlayer;
         }
     }
-
-    public void GetBot(Player botPlayer)
+    public void NotifyTurn(Player activePlayer)
     {
-
+        if(options.IsSimulatedGame)
+        {
+            if(activePlayer == Player.P1)
+            {
+                P1Bot.MakeMove();
+            }
+            else if(activePlayer == Player.P2)
+            {
+                P2Bot.MakeMove();
+            }
+        }
+        else if(options.IsBotGame)
+        {
+            if(activePlayer == Player.P2)
+            {
+                P2Bot.MakeDelayedMove();
+            }
+        }
     }
+    
 }

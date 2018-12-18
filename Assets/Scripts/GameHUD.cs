@@ -34,7 +34,7 @@ public class GameHUD : MonoBehaviour {
 
     Camera cam;
     GameManager manager;
-   
+
     private void Awake()
     {
         cam = Camera.main;
@@ -50,11 +50,11 @@ public class GameHUD : MonoBehaviour {
     }
     public void ShowCurrentTurn()
     {
-        if(manager.IsLocalGame)
+        if (manager.IsLocalGame)
         {
             TurnText = GetPlayerName(manager.ActivePlayer) + " Go!";
         }
-        else if(manager.IsSimulatedGame)
+        else if (manager.IsSimulatedGame)
         {
             if (manager.IsMyTurn(Player.P1))
             {
@@ -65,7 +65,7 @@ public class GameHUD : MonoBehaviour {
                 TurnText = "Bot2 Turn!";
             }
         }
-        else if(manager.IsBotGame && manager.IsOnlineGame)
+        else if (manager.IsBotGame || manager.IsOnlineGame)
         {
             if (manager.IsMyTurn(manager.LocalPlayer))
             {
