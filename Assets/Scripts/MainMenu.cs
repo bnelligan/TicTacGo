@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using GetSocialSdk.Ui;
+using GetSocialSdk.Core;
+using UnityEditor;
 
 public class MainMenu : Photon.MonoBehaviour , IScreen{
     private string GameScene = "Game";
@@ -45,9 +48,14 @@ public class MainMenu : Photon.MonoBehaviour , IScreen{
         options.IsBotGame = false;
         ShowGameOptions();
     }
-    public void OnClick_Customize()
+    public void OnClick_Share()
     {
-
+        bool wasShown = GetSocialUi.CreateInvitesView().Show();
+        Debug.Log("Smart invite view was shown? " + wasShown);
+    }
+    public void OnClick_Exit()
+    {
+        Application.Quit();
     }
     #endregion
 

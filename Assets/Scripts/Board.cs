@@ -272,6 +272,7 @@ public class Board : MonoBehaviour {
         token = Instantiate(token, target.transform);
         //token.transform.position += new Vector3(0, 0, -1);
         target.State = PlayerToState(player);
+        target.Token = token.gameObject;
         boardState[target.X, target.Y] = target.State;
     }
     
@@ -330,19 +331,24 @@ public class Board : MonoBehaviour {
             Debug.LogWarning("Abnormal Tile Highlight!!");
         }
         foreach (Tile t in board)
-        { 
-            if (!tiles.Contains(t))
+        {
+            bool dim = true;
+            foreach(Tile h in tiles)
+            {
+                if (t.X == h.X && t.Y == h.Y)
+                {
+                    dim = false;
+                }
+            }
+            if(dim)
             {
                 t.Dim();
-            }
-            else
-            {
-                t.ResetAlpha();
             }
         }
     }
 
     #region Static Methods
+
     public static TileState PlayerToState(Player player)
     {
         switch(player)
@@ -355,6 +361,7 @@ public class Board : MonoBehaviour {
                 return TileState.EMPTY;
         }
     }
+
     public static Player StateToPlayer(TileState state)
     {
         switch (state)
@@ -366,8 +373,8 @@ public class Board : MonoBehaviour {
             default:
                 return Player.NONE;
         }
-
     }
+
     public static TileState[,] MakeMove(TileState[,] boardState, Move move)
     {
         TileState[,] newBoard = CloneBoardState(boardState);
@@ -382,6 +389,7 @@ public class Board : MonoBehaviour {
         }
         return newBoard;
     }
+
     public static Player GetWinner(TileState[,] boardState, out List<int[]> winningCoords)
     {
         int size = boardState.GetLength(0);
@@ -556,16 +564,19 @@ public class Board : MonoBehaviour {
         // If we get here, there is no winner
         return Player.NONE;
     }
+
     public static Player GetWinner(TileState[,] boardState)
     {
         List<int[]> winningCoords;
         return GetWinner(boardState, out winningCoords);
     }
+
     public static bool CheckPlayerWin(TileState[,] boardState, Player player)
     {
         List<int[]> winningCoords;
         return player == GetWinner(boardState, out winningCoords);
     }
+
     public static bool CheckFull(TileState[,] boardState)
     {
         foreach(TileState t in boardState)
@@ -577,15 +588,18 @@ public class Board : MonoBehaviour {
         }
         return true;
     }
+
     public static bool IsInBounds(TileState[,] boardState, int x, int y)
     {
         return x >= 0 && x < boardState.GetLength(0) && y >= 0 && y < boardState.GetLength(0);
     }
+
     public static bool IsEdgeTile(TileState[,] boardState, int x, int y)
     {
         int s = boardState.GetLength(0) - 1;
         return x  == 0 || y == 0 || x == s || y == s;
     }
+
     public static bool IsCornerTile(TileState[,] boardState, int x, int y)
     {
         bool isCorner = false;
@@ -599,6 +613,7 @@ public class Board : MonoBehaviour {
         }
         return isCorner;
     }
+
     public static bool IsVulnerableMove(TileState[,] boardState, Move move)
     {
         bool isVulnerable = false;
@@ -621,6 +636,7 @@ public class Board : MonoBehaviour {
         }
         return isVulnerable;
     }
+
     public static List<int[]> FindCaptures(TileState[,] boardState, Move move)
     {
         List<int[]> captures = new List<int[]>();
@@ -652,6 +668,7 @@ public class Board : MonoBehaviour {
 
         return captures;
     }
+
     public static List<int[]> FindBlockedCaptures(TileState[,] boardState, Move move)
     {
         List<int[]> blockedCaptures = new List<int[]>();
@@ -683,6 +700,12 @@ public class Board : MonoBehaviour {
 
         return blockedCaptures;
     }
+
+    public static bool CanPlayerWin(TileState[,] boardState, Player player)
+    {
+        return FindWinningMoves(boardState, player).Count > 0;
+    }
+
     public static List<int[]> FindWinningMoves(TileState[,] boardState, Player player)
     {
         List<int[]> winningMoves = new List<int[]>();
@@ -703,6 +726,7 @@ public class Board : MonoBehaviour {
         }
         return winningMoves;
     }
+    
     public static List<int[]> FindAdjacent(TileState[,] boardState, int x, int y)
     {
         List<int[]> adjacentCoords = new List<int[]>();
@@ -717,6 +741,7 @@ public class Board : MonoBehaviour {
         }
         return adjacentCoords;
     }
+
     public static List<int[]> FindAdjacentByState(TileState[,] boardState, int x, int y, TileState state)
     {
         List<int[]> adjCoords = FindAdjacent(boardState, x, y);
@@ -730,6 +755,7 @@ public class Board : MonoBehaviour {
         }
         return adjCoords;
     }
+
     public static List<int[]> FindCorners(TileState[,] boardState)
     {
         int s = boardState.GetLength(0) - 1;
@@ -741,6 +767,7 @@ public class Board : MonoBehaviour {
             new int[2] {s, s},
         };
     }
+
     public static TileState[,] CloneBoardState(TileState[,] boardState)
     {
         TileState[,] clonedBoard = new TileState[boardState.GetLength(0), boardState.GetLength(1)];
@@ -753,5 +780,62 @@ public class Board : MonoBehaviour {
         }
         return clonedBoard;
     }
+    public static bool IsMoveBlitz(TileState[,] boardState, Move move)
+    {
+        // blitz move is when the opponent row is split down the middle between two corners 
+        // e.g. O###O => O#X#O would be a blitz move for X
+        int size = boardState.GetLength(0);
+        bool isBlitz = false;
+        if ( size % 2 != 0)
+        {
+            int mid = size / 2;
+            if(move.X == mid)
+            {
+                isBlitz = true;
+                for(int x = 0; x < size; x++)
+                {
+                    if (x == 0 || x == size - 1)
+                    {
+                        if (boardState[x, move.Y] != PlayerToState(move.opponent))
+                        {
+                            isBlitz = false;
+                        }
+                    }
+                    else
+                    {
+                        if (boardState[x, move.Y] != TileState.EMPTY)
+                        {
+                            isBlitz = false;
+                        }
+
+                    }
+                }
+            }
+            else if(move.Y == mid)
+            {
+                isBlitz = true;
+                for (int y = 0; y < size; y++)
+                {
+                    if (y == 0 || y == size - 1)
+                    {
+                        if (boardState[move.X, y] != PlayerToState(move.opponent))
+                        {
+                            isBlitz = false;
+                        }
+                    }
+                    else
+                    {
+                        if (boardState[move.X, y] != TileState.EMPTY)
+                        {
+                            isBlitz = false;
+                        }
+
+                    }
+                }
+            }
+        }
+        return isBlitz;
+    }
+    
     #endregion
 }

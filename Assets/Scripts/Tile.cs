@@ -15,8 +15,9 @@ public class Tile : MonoBehaviour {
     public TileState State;
     float originalAlpha;
     float dimAlpha = 0.5f;
+    public GameObject Token;
     
-    private void Start()
+    private void Awake()
     {
         originalAlpha = GetComponent<Image>().color.a;
     }
@@ -37,12 +38,13 @@ public class Tile : MonoBehaviour {
         GetComponent<Image>().color = tileColor;
 
         // Token
-        if (transform.childCount > 0)
-        {
-            Color tokenColor = transform.GetChild(0).GetComponent<Image>().color;
+        if (Token != null)
+        { 
+            Color tokenColor = Token.GetComponent<Image>().color;
             tokenColor.a = a;
-            transform.GetChild(0).GetComponent<Image>().color = tokenColor;
+            Token.GetComponent<Image>().color = tokenColor;
         }
+        
     }
 
     public static int[,] GetCoordinates(List<Tile> tiles)

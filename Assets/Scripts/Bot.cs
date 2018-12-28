@@ -98,11 +98,13 @@ public class Bot : MonoBehaviour {
             new CaptureFactor(),
             new BlockCaptureFactor(),
             new BlockLossFactor(),
+            new LossFactor(),
             new CornerFactor(),
             new EdgeFactor(),
             new AdjacencyFactor(),
             new VulnerabilityFactor(),
-            new OpponentVulnerabilityFactor()
+            new OpponentVulnerabilityFactor(),
+            new BlitzFactor()
         };
 
         return factorList;
@@ -243,11 +245,28 @@ public class BlockLossFactor : MoveFactor
         }
     }
 }
+public class LossFactor : MoveFactor
+{
+    public LossFactor()
+    {
+        Score = -500;
+    }
+
+    public override void CalcFactor(TileState[,] board, ref Move move)
+    {
+        TileState[,] newBoard = Board.MakeMove(board, move);
+        if (Board.CanPlayerWin(newBoard, move.opponent))
+        {
+            move.score += Score;
+        }
+    }
+    
+}
 public class CornerFactor : MoveFactor
 {
     public CornerFactor()
     {
-        Score = 100;
+        Score = 150;
     }
     public override void CalcFactor(TileState[,] board, ref Move move)
     {
@@ -349,6 +368,20 @@ public class OpponentVulnerabilityFactor : MoveFactor
             //Debug.Log("Adding " + GetType().ToString() + " to move: " + move);
             move.score += Score;
             //Debug.Log("Move(" + move.X + "," + move.Y + ")" + "score: " + move.score);
+        }
+    }
+}
+public class BlitzFactor : MoveFactor
+{
+    public BlitzFactor()
+    {
+        Score = 40;
+    }
+    public override void CalcFactor(TileState[,] board, ref Move move)
+    {
+        if(Board.IsMoveBlitz(board, move))
+        {
+            move.score += Score;
         }
     }
 }
