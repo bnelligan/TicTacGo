@@ -6222,6 +6222,7 @@ GameObject:
   - component: {fileID: 1499653599}
   - component: {fileID: 1499653601}
   - component: {fileID: 1499653600}
+  - component: {fileID: 1499653602}
   m_Layer: 0
   m_Name: ClientData
   m_TagString: Untagged
@@ -6258,7 +6259,7 @@ MonoBehaviour:
   IsBotGame: 0
   IsOnlineGame: 0
   IsSimulatedGame: 0
-  BoardSize: 4
+  BoardSize: 0
 --- !u!114 &1499653601
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6269,6 +6270,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a4f1dbf0e13f3104aba1c74dac231ea8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1499653602
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1499653598}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96af18475eb7f0a49b9672cedcf6c72d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &1532119676

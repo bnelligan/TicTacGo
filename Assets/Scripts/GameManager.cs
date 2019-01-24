@@ -47,7 +47,11 @@ public class GameManager : PunBehaviour {
         }
     }
     public Player Winner { get; private set; }
-
+    public int OnlineWins { get { return PlayerPrefs.GetInt("OnlineWins"); } set { PlayerPrefs.SetInt("OnlineWins", value); } }
+    public int OnlineLosses { get { return PlayerPrefs.GetInt("OnlineLosses"); } set { PlayerPrefs.SetInt("OnlineLosses", value); } }
+    public int LocalWins { get { return PlayerPrefs.GetInt("LocalWins"); } set { PlayerPrefs.SetInt("LocalWins", value); } }
+    public int BotWins { get { return PlayerPrefs.GetInt("BotWins"); } set { PlayerPrefs.SetInt("BotWins", value); } }
+    public int BotLosses { get { return PlayerPrefs.GetInt("BotLosses"); } set { PlayerPrefs.SetInt("BotLosses", value); } }
     // External refs
     Board board;
     [SerializeField]
@@ -386,9 +390,47 @@ public class GameManager : PunBehaviour {
 
         if(IsSimulatedGame)
         {
-
             botManager.GameOver(winner);
             StartCoroutine(IE_RestartAfterDelay(.1f));
+        }
+
+        if(IsLocalGame || winner == LocalPlayer)
+        {
+            SaveWin();
+        }
+        else if(winner != LocalPlayer && winner != Player.NONE)
+        {
+            SaveLoss();
+        }
+        Debug.Log($"Scores Saved.\n OnlineWins:{OnlineWins} OnlineLosses:{OnlineLosses} LocalWins:{LocalWins} BotWins:{BotWins} BotLosses:{BotLosses}");
+        PlayerPrefs.Save();
+    }
+    void SaveWin()
+    {
+        // Increase score record
+        if(IsOnlineGame)
+        {
+            OnlineWins++;
+        }
+        else if(IsLocalGame)
+        {
+            LocalWins++;
+        }
+        else if(IsBotGame)
+        {
+            BotWins++;
+        }
+    }
+    void SaveLoss()
+    {
+        // Increase score record
+        if (IsOnlineGame)
+        {
+            OnlineLosses++;
+        }
+        else if (IsBotGame)
+        {
+            BotLosses++;
         }
     }
     IEnumerator IE_RestartAfterDelay(float delay)
@@ -421,6 +463,7 @@ public class GameManager : PunBehaviour {
         Winner = Player.NONE;
         board.DestroyBoard();
         HUD.Reset();
+       
     }
     public void ResetGame()
     {   

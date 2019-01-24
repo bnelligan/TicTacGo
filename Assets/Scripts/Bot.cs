@@ -375,7 +375,7 @@ public class BlitzFactor : MoveFactor
 {
     public BlitzFactor()
     {
-        Score = 40;
+        Score = 80;
     }
     public override void CalcFactor(TileState[,] board, ref Move move)
     {

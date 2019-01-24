@@ -782,10 +782,53 @@ public class Board : MonoBehaviour {
     }
     public static bool IsMoveBlitz(TileState[,] boardState, Move move)
     {
-        // blitz move is when the opponent row is split down the middle between two corners 
+        // blitz move is when the opponent tokens are split in the middle, with nothing but white space between
         // e.g. O###O => O#X#O would be a blitz move for X
-        int size = boardState.GetLength(0);
+        // e.g. O#O## => OXO## would also be a blitz for X
         bool isBlitz = false;
+        bool isFree = false;
+        int d = 1;
+        do
+        {
+            isFree = false;
+            for(float r = 0; r < 2; r += 0.25f)
+            {
+                float dx = Mathf.Cos(r * Mathf.PI);
+                if (dx > 0)
+                {
+                    dx = 1;
+                }
+                else if(dx < 0)
+                {
+                    dx = -1;
+                }
+
+                float dy = Mathf.Sin(r * Mathf.PI);
+                if (dy > 0)
+                {
+                    dy = 1;
+                }
+                else if (dy < 0)
+                {
+                    dy = -1;
+                }
+
+                if(!isFree)
+                {
+                    isFree = CompareTileEmpty(boardState, move.X + d * (int)dx, move.Y + d * (int)dy) && CompareTileEmpty(boardState, move.X - d * (int)dx, move.Y - d * (int)dy);
+                }
+                isBlitz = CompareTilePlayer(boardState, move.X + d * (int)dx, move.Y + d * (int)dy, move.opponent) && CompareTilePlayer(boardState, move.X - d * (int)dx, move.Y - d * (int)dy, move.opponent);
+                if (isBlitz)
+                {
+                    Debug.LogWarning($"Blitz found at x:{move.X} y:{move.Y}");
+                }
+            }
+            d++;
+        } while (isFree && !isBlitz);
+
+        /*
+        int size = boardState.GetLength(0);
+
         if ( size % 2 != 0)
         {
             int mid = size / 2;
@@ -834,8 +877,28 @@ public class Board : MonoBehaviour {
                 }
             }
         }
+        */
         return isBlitz;
     }
-    
+    public static bool CompareTileState(TileState[,] board, int x, int y, TileState compareTarget)
+    {
+        bool match = false;
+        if(IsInBounds(board, x, y))
+        {
+            if(board[x,y] == compareTarget)
+            {
+                match = true;
+            }
+        }
+        return match;
+    }
+    public static bool CompareTilePlayer(TileState[,] board, int x, int y, Player comparePlayer)
+    {
+        return CompareTileState(board, x, y, PlayerToState(comparePlayer));
+    }
+    public static bool CompareTileEmpty(TileState[,] board, int x, int y)
+    {
+        return CompareTileState(board, x, y, TileState.EMPTY);
+    }
     #endregion
 }
