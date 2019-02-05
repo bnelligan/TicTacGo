@@ -11,8 +11,13 @@ public class Board : MonoBehaviour {
     int size = 3;
     float tileSize;
     public Tile tilePrefab;
-    public float buildDelay = 0.1f;
+    
+    [SerializeField] float buildDelay = 0.1f;
+    [SerializeField] float tileSpacing3D = 2f;
     public bool AnimateBoard = true;
+
+    public bool IsBoard3D { get; private set; } = false;
+    public bool IsBoard2D { get { return !IsBoard3D; } }
     
     // Tokens
     [SerializeField] GameObject p1Token;
@@ -36,11 +41,17 @@ public class Board : MonoBehaviour {
         new Vector2(0,-1),
         new Vector2(1,-1)
     };
-
+    private void Awake  ()
+    {
+        IsBoard3D = tilePrefab.IsTile3D;
+    }
     public void BuildBoard()
     {
+        Debug.Log("Building board...");
+       
         BuildBoard(size);
     }
+    
     /// <summary>
     /// Create and spawn a board of tiles of the given size
     /// </summary>
@@ -50,18 +61,25 @@ public class Board : MonoBehaviour {
         this.size = size;
         DestroyBoard();
         CalculateTileSize();
-        GetComponent<GridLayoutGroup>().constraintCount = size;
+        if (IsBoard2D)
+        {
+            GetComponent<GridLayoutGroup>().constraintCount = size;
+        }
         GameManager mgr = FindObjectOfType<GameManager>();
 
         board = new Tile[size, size];
         boardState = new TileState[size, size];
+        Vector3 offsetVect = new Vector3(-size + 1, 0, -size + 1) / 2;
         for (int i = 0; i < size; i++)
         {
             for (int j = 0; j < size; j++)
             {
                 // Create a new tile at the correct position, and add it to the board matrix
                 Tile newTile = Instantiate(tilePrefab, transform);
-                
+                if(IsBoard3D)
+                {
+                    newTile.transform.position = ( new Vector3(i, 0, j) + offsetVect ) * tileSpacing3D;
+                }
                 //newTile.transform.position = startPos + new Vector3(i, j) * tileSize;
                 //newTile.transform.localScale *= tileSize;
                 board[i, j] = newTile;
@@ -69,15 +87,19 @@ public class Board : MonoBehaviour {
                 newTile.X = i;
                 newTile.Y = j;
                 newTile.State = TileState.EMPTY;
-                newTile.GetComponent<Button>().onClick.AddListener(delegate { mgr.OnClick_Tile(newTile.X, newTile.Y); });
+                if(IsBoard2D)
+                {
+                    newTile.GetComponent<Button>().onClick.AddListener(delegate { mgr.OnClick_Tile(newTile.X, newTile.Y); });
+                }
                 // If the board is being animated, hide the tiles as they are made
                 if (AnimateBoard)
-                    newTile.GetComponent<Image>().enabled = false;
+                    newTile.IsVisible = false;
             }
         }
         if (AnimateBoard == true)
             StartCoroutine(AnimateBoardSpiral());
     }
+    
     void CalculateTileSize()
     {
         const float SCALE_FACTOR = 0.5f;
@@ -100,7 +122,7 @@ public class Board : MonoBehaviour {
         bool canMove = true;
         while (canMove)
         {
-            board[x, y].GetComponent<Image>().enabled = true;
+            board[x, y].IsVisible = true;
             yield return new WaitForSeconds(buildDelay);
             // Check if we should change direction
             switch (dir)
@@ -110,7 +132,7 @@ public class Board : MonoBehaviour {
                     {
                         TurnLeft(ref dir);
                     }
-                    else if (board[x + 1, y].GetComponent<Image>().enabled == true)
+                    else if (board[x + 1, y].IsVisible == true)
                     {
                         TurnLeft(ref dir);
                     }
@@ -120,7 +142,7 @@ public class Board : MonoBehaviour {
                     {
                         TurnLeft(ref dir);
                     }
-                    else if (board[x, y + 1].GetComponent<Image>().enabled == true)
+                    else if (board[x, y + 1].IsVisible == true)
                     {
                         TurnLeft(ref dir);
                     }
@@ -130,7 +152,7 @@ public class Board : MonoBehaviour {
                     {
                         TurnLeft(ref dir);
                     }
-                    else if (board[x - 1, y].GetComponent<Image>().enabled == true)
+                    else if (board[x - 1, y].IsVisible == true)
                     {
                         TurnLeft(ref dir);
                     }
@@ -140,7 +162,7 @@ public class Board : MonoBehaviour {
                     {
                         TurnLeft(ref dir);
                     }
-                    else if (board[x, y - 1].GetComponent<Image>().enabled == true)
+                    else if (board[x, y - 1].IsVisible == true)
                     {
                         TurnLeft(ref dir);
                     }
@@ -169,13 +191,14 @@ public class Board : MonoBehaviour {
                 canMove = false;
             }
             // Check if we hit a dead end after turning
-            else if(board[x, y].GetComponent<Image>().enabled == true)
+            else if(board[x, y].IsVisible == true)
             {
                 canMove = false;
             }
         }
         manager.IsInputEnabled = true;
     }
+    
 
     void TurnLeft(ref Direction start)
     {

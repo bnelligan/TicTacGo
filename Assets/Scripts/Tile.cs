@@ -16,10 +16,36 @@ public class Tile : MonoBehaviour {
     float originalAlpha;
     float dimAlpha = 0.5f;
     public GameObject Token;
-    
+    public bool IsTile3D { get { return GetComponent<MeshRenderer>() != null; } }
+
+    public bool IsVisible {
+        get
+        {
+            if(IsTile3D)
+            {
+                return GetComponent<MeshRenderer>().enabled;
+            }
+            else
+            {
+                return GetComponent<Image>().enabled;
+            }
+        }
+        set
+        {
+            if (IsTile3D)
+            {
+                GetComponent<MeshRenderer>().enabled = value;
+            }
+            else
+            {
+                GetComponent<Image>().enabled = value;
+            }
+        }
+    }
+
     private void Awake()
     {
-        originalAlpha = GetComponent<Image>().color.a;
+        originalAlpha = IsTile3D ? GetComponent<MeshRenderer>().material.color.a : GetComponent<Image>().color.a;
     }
 
     public void Dim()
@@ -33,18 +59,33 @@ public class Tile : MonoBehaviour {
     public void SetAlpha(float a)
     {
         // Tile
-        Color tileColor = GetComponent<Image>().color;
+        Color tileColor;
+        tileColor = IsTile3D ? GetComponent<MeshRenderer>().material.color : GetComponent<Image>().color;
+
         tileColor.a = a;
-        GetComponent<Image>().color = tileColor;
+        if(IsTile3D)
+        {
+            GetComponent<MeshRenderer>().material.color = tileColor;
+        }
+        else
+        {
+            GetComponent<Image>().color = tileColor;
+        }
 
         // Token
         if (Token != null)
         { 
-            Color tokenColor = Token.GetComponent<Image>().color;
+            Color tokenColor = IsTile3D ? Token.GetComponent<MeshRenderer>().material.color : Token.GetComponent<Image>().color;
             tokenColor.a = a;
-            Token.GetComponent<Image>().color = tokenColor;
+            if (IsTile3D)
+            {
+                Token.GetComponent<MeshRenderer>().material.color = tokenColor;
+            }
+            else
+            {
+                Token.GetComponent<Image>().color = tokenColor;
+            }
         }
-        
     }
 
     public static int[,] GetCoordinates(List<Tile> tiles)
@@ -68,4 +109,5 @@ public class Tile : MonoBehaviour {
     {
         return new int[2] { x, y };
     }
+
 }

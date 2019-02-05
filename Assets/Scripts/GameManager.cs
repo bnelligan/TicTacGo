@@ -253,20 +253,26 @@ public class GameManager : PunBehaviour {
     {
         if(Input.GetMouseButtonDown(0))
         {
-            RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
-            if(hit)
+            if (board.IsBoard3D)
             {
-                Tile hitTile = hit.collider.GetComponent<Tile>();
-                if(hitTile && IsMyTurn(LocalPlayer))
+                RaycastHit hit;
+                
+                if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
                 {
-                    if(IsOnlineGame)
+                    Debug.Log("Clicked: " + hit.transform.gameObject?.name);
+                    
+                    Tile hitTile = hit.collider.GetComponent<Tile>();
+                    if (hitTile && IsMyTurn(LocalPlayer))
                     {
-                        Debug.Log("Making Move!");
-                        photonView.RPC("RPC_MakeMove", PhotonTargets.AllBuffered, hitTile.X, hitTile.Y, ActivePlayer);
-                    }
-                    else
-                    {
-                        MakeMove(hitTile.X, hitTile.Y, ActivePlayer);
+                        if (IsOnlineGame)
+                        {
+                            Debug.Log("Making Move!");
+                            photonView.RPC("RPC_MakeMove", PhotonTargets.AllBuffered, hitTile.X, hitTile.Y, ActivePlayer);
+                        }
+                        else
+                        {
+                            MakeMove(hitTile.X, hitTile.Y, ActivePlayer);
+                        }
                     }
                 }
             }
