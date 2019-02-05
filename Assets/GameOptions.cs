@@ -8,6 +8,7 @@ public class GameOptions : MonoBehaviour {
     public bool IsBotGame;
     public bool IsOnlineGame;
     public bool IsSimulatedGame;
+    public bool Start3D = true;
     public int BoardSize = 3;
     public static readonly byte MaxPlayers = 2;
 

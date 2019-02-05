@@ -7,9 +7,9 @@ using GetSocialSdk.Core;
 using UnityEditor;
 
 public class MainMenu : Photon.MonoBehaviour , IScreen{
-    private string GameScene = "Game";
     GameOptions options;
     IScreen optionsMenu;
+    private string GameScene { get { return options.Start3D ? "Game_3D" : "Game"; } }
 
     private void Awake()
     {
