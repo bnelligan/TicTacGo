@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using GetSocialSdk.Ui;
-using GetSocialSdk.Core;
 using UnityEditor;
 
 public class MainMenu : Photon.MonoBehaviour , IScreen{
@@ -19,7 +17,7 @@ public class MainMenu : Photon.MonoBehaviour , IScreen{
     }
     public void Show()
     {
-        GetComponent<Canvas>().enabled = true;
+        GetCompnent<Canvas>().enabled = true;
     }
     public void Hide()
     {
@@ -50,8 +48,6 @@ public class MainMenu : Photon.MonoBehaviour , IScreen{
     }
     public void OnClick_Share()
     {
-        bool wasShown = GetSocialUi.CreateInvitesView().Show();
-        Debug.Log("Smart invite view was shown? " + wasShown);
     }
     public void OnClick_Exit()
     {
