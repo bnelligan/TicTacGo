@@ -10,8 +10,6 @@ using UnityEditor;
 [CustomEditor(typeof(GameManager))]
 public class BoardDebugger : Editor {
     
-    float tileSize = 50;
-    float tileDist = 10;
     int boardSize = 3;
     int sizeIndex = 0;
     int winconIndex = 0;
@@ -143,7 +141,6 @@ public class BoardDebugger : Editor {
     private void TestWinCondition()
     {
         GameManager manager = (GameManager)target;
-        UI_Manager UI = manager.GetComponent<UI_Manager>();
         List<Move> winnerMoves = new List<Move>();
         List<Move> loserMoves = new List<Move>();
         List<Move> moves = new List<Move>();
@@ -497,7 +494,6 @@ public class BoardDebugger : Editor {
     private void ApplyBoard()
     {
         GameManager manager = (GameManager)target;
-        UI_Manager UI = manager.GetComponent<UI_Manager>();
 
         if (ValidateBoard())
         {

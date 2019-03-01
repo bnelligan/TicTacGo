@@ -27,7 +27,7 @@ public class Tile : MonoBehaviour {
             }
             else
             {
-                return GetComponent<Image>().enabled;
+                return GetComponent<SpriteRenderer>().enabled;
             }
         }
         set
@@ -38,14 +38,14 @@ public class Tile : MonoBehaviour {
             }
             else
             {
-                GetComponent<Image>().enabled = value;
+                GetComponent<SpriteRenderer>().enabled = value;
             }
         }
     }
 
     private void Awake()
     {
-        originalAlpha = IsTile3D ? GetComponent<MeshRenderer>().material.color.a : GetComponent<Image>().color.a;
+        originalAlpha = IsTile3D ? GetComponent<MeshRenderer>().material.color.a : GetComponent<SpriteRenderer>().color.a;
     }
 
     public void Dim()
@@ -60,7 +60,7 @@ public class Tile : MonoBehaviour {
     {
         // Tile
         Color tileColor;
-        tileColor = IsTile3D ? GetComponent<MeshRenderer>().material.color : GetComponent<Image>().color;
+        tileColor = IsTile3D ? GetComponent<MeshRenderer>().material.color : GetComponent<SpriteRenderer>().color;
 
         tileColor.a = a;
         if(IsTile3D)
@@ -69,13 +69,13 @@ public class Tile : MonoBehaviour {
         }
         else
         {
-            GetComponent<Image>().color = tileColor;
+            GetComponent<SpriteRenderer>().color = tileColor;
         }
 
         // Token
         if (Token != null)
         { 
-            Color tokenColor = IsTile3D ? Token.GetComponent<MeshRenderer>().material.color : Token.GetComponent<Image>().color;
+            Color tokenColor = IsTile3D ? Token.GetComponent<MeshRenderer>().material.color : Token.GetComponent<SpriteRenderer>().color;
             tokenColor.a = a;
             if (IsTile3D)
             {
@@ -83,7 +83,7 @@ public class Tile : MonoBehaviour {
             }
             else
             {
-                Token.GetComponent<Image>().color = tokenColor;
+                Token.GetComponent<SpriteRenderer>().color = tokenColor;
             }
         }
     }

@@ -61,25 +61,19 @@ public class Board : MonoBehaviour {
         this.size = size;
         DestroyBoard();
         CalculateTileSize();
-        if (IsBoard2D)
-        {
-            GetComponent<GridLayoutGroup>().constraintCount = size;
-        }
         GameManager mgr = FindObjectOfType<GameManager>();
 
         board = new Tile[size, size];
         boardState = new TileState[size, size];
-        Vector3 offsetVect = new Vector3(-size + 1, 0, -size + 1) / 2;
+        Vector3 offsetVect = new Vector3(-size + 1, -size + 1, 0) / 2;
         for (int i = 0; i < size; i++)
         {
             for (int j = 0; j < size; j++)
             {
                 // Create a new tile at the correct position, and add it to the board matrix
                 Tile newTile = Instantiate(tilePrefab, transform);
-                if(IsBoard3D)
-                {
-                    newTile.transform.position = ( new Vector3(i, 0, j) + offsetVect ) * tileSpacing3D;
-                }
+                newTile.transform.position = ( new Vector3(i, j, 0) + offsetVect ) * tileSpacing3D;
+                
                 //newTile.transform.position = startPos + new Vector3(i, j) * tileSize;
                 //newTile.transform.localScale *= tileSize;
                 board[i, j] = newTile;
@@ -87,10 +81,6 @@ public class Board : MonoBehaviour {
                 newTile.X = i;
                 newTile.Y = j;
                 newTile.State = TileState.EMPTY;
-                if(IsBoard2D)
-                {
-                    newTile.GetComponent<Button>().onClick.AddListener(delegate { mgr.OnClick_Tile(newTile.X, newTile.Y); });
-                }
                 // If the board is being animated, hide the tiles as they are made
                 if (AnimateBoard)
                     newTile.IsVisible = false;
