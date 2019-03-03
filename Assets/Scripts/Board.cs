@@ -341,10 +341,10 @@ public class Board : MonoBehaviour {
     {
         return x >= 0 && x < size && y >= 0 && y < size;
     }
-    public void SetTokens(GameObject p1, GameObject p2)
+    public void SetTokenSprites(Sprite p1Sprite, Sprite p2Sprite)
     {
-        p1Token = p1;
-        p2Token = p2;
+        p1Token.GetComponent<Image>().sprite = p1Sprite;
+        p2Token.GetComponent<Image>().sprite = p2Sprite;
     }
 
     public void HighlightTiles(List<Tile> tiles)

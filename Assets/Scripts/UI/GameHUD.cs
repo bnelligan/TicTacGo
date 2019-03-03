@@ -9,27 +9,11 @@ public class GameHUD : MonoBehaviour {
     public bool ChangeBackColor;
 
     #region HUD Elements
-    [SerializeField] GameObject TxtHeader;
     [SerializeField] GameObject BtnRematch;
     [SerializeField] GameObject BtnMenu;
     #endregion
 
     #region Element Accessors
-    public string TurnText
-    {
-        get { return TxtHeader.GetComponent<Text>().text; }
-        private set { TxtHeader.GetComponent<Text>().text = value; }
-    }
-    public string HeaderText
-    {
-        get { return TxtHeader.GetComponent<Text>().text; }
-        private set { TxtHeader.GetComponent<Text>().text = value; }
-    }
-    public string RematchText
-    {
-        get { return BtnRematch.GetComponentInChildren<Text>().text; }
-        set { BtnRematch.GetComponentInChildren<Text>().text = value; }
-    }
     #endregion
 
     Camera cam;
@@ -39,89 +23,91 @@ public class GameHUD : MonoBehaviour {
     {
         cam = Camera.main;
         manager = FindObjectOfType<GameManager>();
+        BtnMenu.GetComponent<Button>().onClick.AddListener(manager.OnClick_QuitToMenu);
+        BtnRematch.GetComponent<Button>().onClick.AddListener(manager.OnClick_Rematch);
         Reset();
     }
 
     #region Public Methods
     public void ShowWaitingForPlayers()
     {
-        HeaderText = "Waiting for players...";
+        //HeaderText = "Waiting for players...";
         BtnRematch.SetActive(false);
     }
     public void ShowCurrentTurn()
     {
-        if (manager.IsLocalGame)
-        {
-            TurnText = GetPlayerName(manager.ActivePlayer) + " Go!";
-        }
-        else if (manager.IsSimulatedGame)
-        {
-            if (manager.IsMyTurn(Player.P1))
-            {
-                TurnText = "Bot1 Turn!";
-            }
-            else
-            {
-                TurnText = "Bot2 Turn!";
-            }
-        }
-        else if (manager.IsBotGame || manager.IsOnlineGame)
-        {
-            if (manager.IsMyTurn(manager.LocalPlayer))
-            {
-                TurnText = "Your Turn!";
-            }
-            else
-            {
-                TurnText = "Opponent Turn...";
-            }
-        }
+        //if (manager.IsLocalGame)
+        //{
+        //    TurnText = GetPlayerName(manager.ActivePlayer) + " Go!";
+        //}
+        //else if (manager.IsSimulatedGame)
+        //{
+        //    if (manager.IsMyTurn(Player.P1))
+        //    {
+        //        TurnText = "Bot1 Turn!";
+        //    }
+        //    else
+        //    {
+        //        TurnText = "Bot2 Turn!";
+        //    }
+        //}
+        //else if (manager.IsBotGame || manager.IsOnlineGame)
+        //{
+        //    if (manager.IsMyTurn(manager.LocalPlayer))
+        //    {
+        //        TurnText = "Your Turn!";
+        //    }
+        //    else
+        //    {
+        //        TurnText = "Opponent Turn...";
+        //    }
+        //}
     }
     public void ShowTie()
     {
-        TurnText = "Tie Game!";
-        BtnRematch.SetActive(true);
+        //TurnText = "Tie Game!";
+        // BtnRematch.SetActive(true);
     }
     public void ShowWinner(Player winningPlayer)
     {
-        if(manager.IsOnlineGame || manager.IsBotGame)
-        {
-            if(manager.LocalPlayer == winningPlayer)
-            {
-                HeaderText = "YOU WIN!";
-            }
-            else
-            {
-                HeaderText = "You Lost";
-            }
-        }
-        else
-        {
-            HeaderText = winningPlayer.ToString() + " WINS!";
-        }
+        //if(manager.IsOnlineGame || manager.IsBotGame)
+        //{
+        //    if(manager.LocalPlayer == winningPlayer)
+        //    {
+        //        HeaderText = "YOU WIN!";
+        //    }
+        //    else
+        //    {
+        //        HeaderText = "You Lost";
+        //    }
+        //}
+        //else
+        //{
+        //    HeaderText = winningPlayer.ToString() + " WINS!";
+        //}
         BtnRematch.SetActive(true);
-        RematchText = "Rematch";
+        //RematchText = "Rematch";
     }
     public void ShowRequestRematch()
     {
-        HeaderText = "Rematch Requested";
-        RematchText = "Cancel";
+        //HeaderText = "Rematch Requested";
+        //RematchText = "Cancel";
     }
     public void ShowCancelRematch()
     {
-        HeaderText = "Rematch Canceled!";
-        RematchText = "Rematch";
+        //HeaderText = "Rematch Canceled!";
+        //RematchText = "Rematch";
     }
     public void Reset()
     {
-        HeaderText = "Starting...";
+        //HeaderText = "Starting...";
         BtnRematch.SetActive(false);
     }
     #endregion
 
     string GetPlayerName(Player player)
     {
-        string name = "Player";
+        string name = "No Player";
         if(player == Player.P1)
         {
             name = "Player One";

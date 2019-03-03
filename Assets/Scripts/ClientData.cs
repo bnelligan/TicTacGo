@@ -16,7 +16,7 @@ public class ClientData : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        ProcessAuthentication();
+        //ProcessAuthentication();
         
     }
 

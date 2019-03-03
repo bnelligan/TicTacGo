@@ -5,22 +5,31 @@ using UnityEngine;
 
 public class GameOptions : MonoBehaviour {
 
-    public bool IsBotGame;
-    public bool IsOnlineGame;
-    public bool IsSimulatedGame;
-    public bool Start3D = true;
+    public GameMode mode;
+    public bool IsBotGame {get { return mode == GameMode.BOT; } }
+    public bool IsOnlineGame { get { return mode == GameMode.ONLINE; } }
+    public bool IsSimulatedGame { get { return mode == GameMode.LOCAL; } }
+    public bool Start3D = false;
     public int BoardSize = 3;
     public static readonly byte MaxPlayers = 2;
-
+    public Sprite PlayerToken;
+    public Sprite OtherPlayerToken;
+    
     private void Awake()
     {
         Reset();
     }
-
+    private void Start()
+    {
+        Board board = FindObjectOfType<Board>();
+        if(board)
+        {
+            board.SetTokenSprites(PlayerToken, OtherPlayerToken);
+        }
+    }
     public void Reset()
     {
-        IsBotGame = false;
-        IsOnlineGame = false;
+        mode = GameMode.LOCAL;
     }
 
     public RoomOptions GetRoomOptions()
