@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEditor;
 
-public class MainMenu : Photon.MonoBehaviour , IScreen{
+public class MainMenu : Photon.MonoBehaviour, IScreen {
     GameOptions options;
     IScreen optionsMenu;
     private string GameScene { get { return options.Start3D ? "Game_3D" : "Game"; } }
@@ -15,6 +15,11 @@ public class MainMenu : Photon.MonoBehaviour , IScreen{
     Button btnToggleMode;
     [SerializeField]
     Button btnPlay;
+
+    [SerializeField]
+    Image P1TokenSelect;
+    [SerializeField]
+    Image P2TokenSelect;
 
     private void Start()
     {
@@ -26,24 +31,33 @@ public class MainMenu : Photon.MonoBehaviour , IScreen{
         SetBoardSelectSprite();
         SetModeSprite();
     }
+
     public void Show()
     {
         GetComponent<Canvas>().enabled = true;
     }
+
     public void Hide()
     {
         GetComponent<Canvas>().enabled = false;
     }
 
-    #region OnClick Events
+#region OnClick Events
+
     public void OnClick_Play()
     {
+        if(options.IsOnlineGame)
+        {
+            btnPlay.GetComponent<Animator>().SetBool("Searching", true);
+        }
         StartGame();
     }
+
     public void OnClick_Exit()
     {
         Application.Quit();
     }
+
     public void OnClick_ToggleBoard()
     {
         int size = options.BoardSize;
@@ -56,6 +70,7 @@ public class MainMenu : Photon.MonoBehaviour , IScreen{
 
         SetBoardSelectSprite();
     }
+
     public void OnClick_ToggleMode()
     {
         GameMode mode = options.mode;
@@ -74,58 +89,94 @@ public class MainMenu : Photon.MonoBehaviour , IScreen{
         options.mode = mode;
         SetModeSprite();
     }
-    #endregion
+    
+#endregion
 
     private void ShowGameOptions()
     {
         Hide();
         optionsMenu.Show();
     }
+
     private void StartGame()
     {
+        SetPlayerTokens();
         if(options.IsOnlineGame)
             StartOnlineGame();
         else
             StartLocalGame();
         // Needs bot game check
     }
+
     private void StartLocalGame()
     {
         SceneManager.LoadScene(GameScene);
     }
+
     private void StartOnlineGame()
     {
         GetComponent<ConnectAndJoinRandom>().AutoConnect = true;
     }
+
     private void SetBoardSelectSprite()
     {
         int size = options.BoardSize;
         Sprite DefaultSprite = Resources.Load<Sprite>($"Sprites/UI/BoardSelectButton_{size}x{size}_Default");
-        Sprite SelectedSprite = Resources.Load<Sprite>($"Sprites/UI/BoardSelectButton_{size}x{size}_Selected");
+        //Sprite SelectedSprite = Resources.Load<Sprite>($"Sprites/UI/BoardSelectButton_{size}x{size}_Selected");
         Sprite PressedSprite = Resources.Load<Sprite>($"Sprites/UI/BoardSelectButton_{size}x{size}_Pressed");
         btnToggleBoard.image.sprite = DefaultSprite;
 
         SpriteState ss = btnToggleBoard.spriteState;
-        ss.highlightedSprite = SelectedSprite;
+        //ss.highlightedSprite = SelectedSprite;
         ss.pressedSprite = PressedSprite;
         btnToggleBoard.spriteState = ss;
     }
+
     private void SetModeSprite()
     {
         GameMode mode = options.mode;
         Sprite DefaultSprite = Resources.Load<Sprite>($"Sprites/UI/ModeSelectButton_{mode}_Default");
-        Sprite SelectedSprite = Resources.Load<Sprite>($"Sprites/UI/ModeSelectButton_{mode}_Selected");
+        //Sprite SelectedSprite = Resources.Load<Sprite>($"Sprites/UI/ModeSelectButton_{mode}_Selected");
         Sprite PressedSprite = Resources.Load<Sprite>($"Sprites/UI/ModeSelectButton_{mode}_Pressed");
         btnToggleMode.image.sprite = DefaultSprite;
 
         SpriteState ss = btnToggleMode.spriteState;
-        ss.highlightedSprite = SelectedSprite;
+        //ss.highlightedSprite = SelectedSprite;
         ss.pressedSprite = PressedSprite;
         btnToggleMode.spriteState = ss;
     }
+
+    private void SetPlayerTokens()
+    {
+        
+        options.P1Token = P1TokenSelect.sprite;
+        if (P1TokenSelect.sprite.name == P2TokenSelect.sprite.name)
+        {
+            options.P2Token = Resources.Load<Sprite>($"Sprites/Tokens/ALT/{P1TokenSelect.sprite.name}_ALT");
+        }
+        else
+        {
+            options.P2Token = P2TokenSelect.sprite;
+        }
+    }
     public virtual void OnJoinedRoom()
     {
-        PhotonNetwork.LoadLevel(GameScene);
+        if(PhotonNetwork.isMasterClient)
+        {
+            StartCoroutine(IE_StartWhenPlayersJoin());
+        }
     }
 
+    private IEnumerator IE_StartWhenPlayersJoin()
+    {
+        while (PhotonNetwork.playerList.Length < 2)
+        {
+            yield return new WaitForEndOfFrame();
+        }
+        if (PhotonNetwork.isMasterClient)
+        {
+            Debug.Log("Loading Level");
+            PhotonNetwork.LoadLevel(GameScene);
+        }
+    } 
 }

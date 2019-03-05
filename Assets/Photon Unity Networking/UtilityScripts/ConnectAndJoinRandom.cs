@@ -10,6 +10,7 @@ public class ConnectAndJoinRandom : Photon.MonoBehaviour
 {
     /// <summary>Connect automatically? If false you can set this to true later on or call ConnectUsingSettings in your own scripts.</summary>
     public bool AutoConnect = true;
+    public bool AutoSyncScene = true;
     public byte Version = 2;
     GameOptions options;
 
@@ -20,6 +21,7 @@ public class ConnectAndJoinRandom : Photon.MonoBehaviour
     public virtual void Start()
     {
         options = FindObjectOfType<GameOptions>();
+        PhotonNetwork.automaticallySyncScene = AutoSyncScene;
         PhotonNetwork.autoJoinLobby = false;    // we join randomly. always. no need to join a lobby to get the list of rooms.
     }
 

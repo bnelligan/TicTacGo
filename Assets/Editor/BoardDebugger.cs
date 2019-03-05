@@ -434,21 +434,6 @@ public class BoardDebugger : Editor {
                 break;
         }
     }
-    private Texture2D GetTexture(TileState state)
-    {
-        GameManager manager = (GameManager)target;
-        
-        switch (state)
-        {
-            case TileState.P1:
-                return manager.GameBoard.P1Texture;
-            case TileState.P2:
-                return manager.GameBoard.P2Texture;
-            default:
-                return Resources.Load<Sprite>("Sprites/tile-grid").texture;
-        }
-
-    }
     private void ClearBoard()
     {
         dBoard = new TileState[boardSize, boardSize];

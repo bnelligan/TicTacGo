@@ -51,6 +51,7 @@ public class TokenSelect : MonoBehaviour
     {
         if(AvailableTokens.Length > 0)
         {
+            Debug.Log("name" + SelectedToken.name);
             imgDisplayToken.sprite = SelectedToken;
         }
         else

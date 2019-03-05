@@ -12,20 +12,12 @@ public class GameOptions : MonoBehaviour {
     public bool Start3D = false;
     public int BoardSize = 3;
     public static readonly byte MaxPlayers = 2;
-    public Sprite PlayerToken;
-    public Sprite OtherPlayerToken;
+    public Sprite P1Token;
+    public Sprite P2Token;
     
     private void Awake()
     {
         Reset();
-    }
-    private void Start()
-    {
-        Board board = FindObjectOfType<Board>();
-        if(board)
-        {
-            board.SetTokenSprites(PlayerToken, OtherPlayerToken);
-        }
     }
     public void Reset()
     {

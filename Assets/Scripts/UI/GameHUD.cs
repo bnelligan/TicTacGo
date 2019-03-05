@@ -27,6 +27,10 @@ public class GameHUD : MonoBehaviour {
         BtnRematch.GetComponent<Button>().onClick.AddListener(manager.OnClick_Rematch);
         Reset();
     }
+    private void Update()
+    {
+        BtnRematch.GetComponent<Animator>().SetBool("Searching", manager.RematchFlag);
+    }
 
     #region Public Methods
     public void ShowWaitingForPlayers()
@@ -36,37 +40,11 @@ public class GameHUD : MonoBehaviour {
     }
     public void ShowCurrentTurn()
     {
-        //if (manager.IsLocalGame)
-        //{
-        //    TurnText = GetPlayerName(manager.ActivePlayer) + " Go!";
-        //}
-        //else if (manager.IsSimulatedGame)
-        //{
-        //    if (manager.IsMyTurn(Player.P1))
-        //    {
-        //        TurnText = "Bot1 Turn!";
-        //    }
-        //    else
-        //    {
-        //        TurnText = "Bot2 Turn!";
-        //    }
-        //}
-        //else if (manager.IsBotGame || manager.IsOnlineGame)
-        //{
-        //    if (manager.IsMyTurn(manager.LocalPlayer))
-        //    {
-        //        TurnText = "Your Turn!";
-        //    }
-        //    else
-        //    {
-        //        TurnText = "Opponent Turn...";
-        //    }
-        //}
+        
     }
     public void ShowTie()
     {
-        //TurnText = "Tie Game!";
-        // BtnRematch.SetActive(true);
+        BtnRematch.SetActive(true);
     }
     public void ShowWinner(Player winningPlayer)
     {

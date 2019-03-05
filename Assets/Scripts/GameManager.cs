@@ -66,7 +66,7 @@ public class GameManager : PunBehaviour {
         Setup();
         if(IsOnlineGame)
         {
-            StartCoroutine(IE_StartWhenPlayersJoin());  
+            photonView.RPC("RPC_StartGame", PhotonTargets.AllBuffered);
         }
         else
         {
@@ -75,12 +75,16 @@ public class GameManager : PunBehaviour {
 	}
     void Setup()
     {
-        if (HUD == null) HUD = GameObject.FindObjectOfType<GameHUD>();
+        if (HUD == null) HUD = FindObjectOfType<GameHUD>();
         board = FindObjectOfType<Board>();
         options = FindObjectOfType<GameOptions>();
         if(options == null)
         {
             options = gameObject.AddComponent<GameOptions>();
+        }
+        if(options.P1Token && options.P2Token)
+        {
+            board.SetTokenSprites(options.P1Token, options.P2Token);
         }
 
         MoveHistory = new List<Move>();
@@ -90,7 +94,7 @@ public class GameManager : PunBehaviour {
 
 	private IEnumerator IE_StartWhenPlayersJoin()
     {
-        HUD.ShowWaitingForPlayers();
+        //HUD.ShowWaitingForPlayers();
         while (PhotonNetwork.playerList.Length < 2)
         {
             yield return new WaitForEndOfFrame();
@@ -150,8 +154,16 @@ public class GameManager : PunBehaviour {
         {
             Application.Quit();
         }   
+
+        if(IsOnlineGame)
+        {
+            if(PhotonNetwork.playerList.Length < 2)
+            {
+                Debug.Log("Player disconnected. Returning to Main Menu");
+                ReturnToMenu();
+            }
+        }
 	}
-    
 
     #region Click Events
     public void OnClick_Concede()

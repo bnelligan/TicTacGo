@@ -18,14 +18,12 @@ public class Board : MonoBehaviour {
 
     public bool IsBoard3D { get; private set; } = false;
     public bool IsBoard2D { get { return !IsBoard3D; } }
-    
+    public float BoardScaleFactor = 0.8f;
     // Tokens
-    [SerializeField] GameObject p1Token;
-    [SerializeField] GameObject p2Token;
+    [SerializeField] GameObject tokenPrefab;
 
-    public Texture2D P1Texture { get { return p1Token.GetComponent<SpriteRenderer>().sprite.texture; } }
-    public Texture2D P2Texture { get { return p2Token.GetComponent<SpriteRenderer>().sprite.texture; } }
-    public Texture2D TileTexture { get { return tilePrefab.GetComponent<SpriteRenderer>().sprite.texture; } }
+    public Sprite P1Token;
+    public Sprite P2Token;
     
 
     public int Size { get { return size; } }
@@ -63,7 +61,10 @@ public class Board : MonoBehaviour {
         CalculateTileSize();
         if (IsBoard2D)
         {
-            GetComponent<GridLayoutGroup>().constraintCount = size;
+            GridLayoutGroup glg = GetComponent<GridLayoutGroup>();
+            glg.constraintCount = size;
+            glg.cellSize = new Vector2(tileSize, tileSize);
+            glg.spacing = glg.cellSize / 16;
         }
         GameManager mgr = FindObjectOfType<GameManager>();
 
@@ -102,11 +103,11 @@ public class Board : MonoBehaviour {
     
     void CalculateTileSize()
     {
-        const float SCALE_FACTOR = 0.5f;
-        const float PIXEL_FACTOR = 100f;
+        
 
-        float sqScreenSize = Mathf.Min(Screen.width, Screen.height) * SCALE_FACTOR;
-        tileSize = sqScreenSize / size / PIXEL_FACTOR;
+        float sqScreenSize = Mathf.Min(Screen.width, Screen.height) * BoardScaleFactor;
+        tileSize = sqScreenSize / size;
+        Debug.Log("Tile Size: " + tileSize);
     }
     /// <summary>
     /// Animate the board build in a spiral pattern
@@ -280,19 +281,25 @@ public class Board : MonoBehaviour {
     private void PlaceToken(Tile target, Player player)
     {
         // Destroy any tokens on that tile
-        for(int c = 0; c < target.transform.childCount; c++)
+        for (int c = 0; c < target.transform.childCount; c++)
         {
             Transform currentToken = target.transform.GetChild(c);
-            if(currentToken.CompareTag("Token"))
+            if (currentToken.CompareTag("Token"))
                 Destroy(currentToken.gameObject);
         }
         // Place the player token on the tile
         GameObject token;
+        token = Instantiate(tokenPrefab, target.transform);
+        token.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, tileSize);
+        token.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, tileSize);
         if (player == Player.P1)
-            token = p1Token;
-        else
-            token = p2Token;
-        token = Instantiate(token, target.transform);
+        {
+            token.GetComponent<Image>().sprite = P1Token;
+        }
+        else if (player == Player.P2)
+        {
+            token.GetComponent<Image>().sprite = P2Token;
+        }
         //token.transform.position += new Vector3(0, 0, -1);
         target.State = PlayerToState(player);
         target.Token = token.gameObject;
@@ -343,8 +350,8 @@ public class Board : MonoBehaviour {
     }
     public void SetTokenSprites(Sprite p1Sprite, Sprite p2Sprite)
     {
-        p1Token.GetComponent<Image>().sprite = p1Sprite;
-        p2Token.GetComponent<Image>().sprite = p2Sprite;
+        P1Token = p1Sprite;
+        P2Token = p2Sprite;
     }
 
     public void HighlightTiles(List<Tile> tiles)

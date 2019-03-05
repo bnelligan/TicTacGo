@@ -215,8 +215,11 @@ MonoBehaviour:
   buildDelay: 0.1
   tileSpacing3D: 0.8
   AnimateBoard: 1
-  p1Token: {fileID: 1100677397903242, guid: ac957c94b5417fb469c0910c0d44133b, type: 3}
-  p2Token: {fileID: 1551383845676338, guid: d7820919cd4a6e342bba01ed817b932f, type: 3}
+  BoardScaleFactor: 0.8
+  tokenPrefab: {fileID: 1463198975842318, guid: 23f37057243d60746bc8f34e525be850,
+    type: 3}
+  P1Token: {fileID: 21300000, guid: d57f5a216442e2d45bd27b6cf3077eb4, type: 3}
+  P2Token: {fileID: 21300000, guid: 1e6489dedf5d2c248a25acbcd001976b, type: 3}
 --- !u!223 &479250665
 Canvas:
   m_ObjectHideFlags: 0
@@ -474,8 +477,7 @@ MonoBehaviour:
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
-    m_HighlightedSprite: {fileID: 21300000, guid: e1a31ddfc611afb40a493c4885e0e3e8,
-      type: 3}
+    m_HighlightedSprite: {fileID: 0}
     m_PressedSprite: {fileID: 21300000, guid: 95d4e14902f0957418457b7a9ae6eb3d, type: 3}
     m_DisabledSprite: {fileID: 0}
   m_AnimationTriggers:
@@ -539,12 +541,12 @@ MonoBehaviour:
   m_Script: {fileID: 1980459831, guid: f70555f144d8491a825f0804e09c671c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 800, y: 800}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
+  m_MatchWidthOrHeight: 0.5
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -1108,7 +1110,7 @@ MonoBehaviour:
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
-  m_Transition: 3
+  m_Transition: 2
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
@@ -1117,8 +1119,7 @@ MonoBehaviour:
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
-    m_HighlightedSprite: {fileID: 21300000, guid: e8b2bd1d18db6cd4cb4490e98ab9cde6,
-      type: 3}
+    m_HighlightedSprite: {fileID: 0}
     m_PressedSprite: {fileID: 21300000, guid: ab98b3944f137c647af49b786b13f296, type: 3}
     m_DisabledSprite: {fileID: 0}
   m_AnimationTriggers:
