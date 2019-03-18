@@ -5851,6 +5851,7 @@ MonoBehaviour:
   btnSwapLeft: {fileID: 658903839}
   btnSwapRight: {fileID: 1367359579}
   imgDisplayToken: {fileID: 397323032}
+  targetPlayer: 1
 --- !u!1 &1082984159
 GameObject:
   m_ObjectHideFlags: 0
@@ -6163,6 +6164,7 @@ MonoBehaviour:
   btnSwapLeft: {fileID: 427691541}
   btnSwapRight: {fileID: 1942264870}
   imgDisplayToken: {fileID: 125124988}
+  targetPlayer: 2
 --- !u!224 &1176753605 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 5921493115048498363, guid: 9073c84879a1e544fa89494ddfd6d643,

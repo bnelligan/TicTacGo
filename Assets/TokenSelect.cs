@@ -15,6 +15,8 @@ public class TokenSelect : MonoBehaviour
     public Sprite SelectedToken { get { return AvailableTokens[idxSelected]; } }
     private Sprite[] AvailableTokens;
     int idxSelected = 0;
+    [SerializeField]
+    Player targetPlayer;
     
     private void Awake()
     {
@@ -24,6 +26,14 @@ public class TokenSelect : MonoBehaviour
     }
     private void Start()
     {
+        string SavedToken = PlayerPrefs.GetString($"{targetPlayer.ToString()}_Token", "NONE");
+        for(int i = 0; i < AvailableTokens.Length; i++)
+        {
+            if(AvailableTokens[i].name == SavedToken)
+            {
+                idxSelected = i;
+            }
+        }
         SetToken();
     }
 
@@ -49,14 +59,15 @@ public class TokenSelect : MonoBehaviour
 
     private void SetToken()
     {
-        if(AvailableTokens.Length > 0)
+        PlayerPrefs.SetString($"{targetPlayer.ToString()}_Token", SelectedToken.name);
+        if (AvailableTokens.Length > 0)
         {
-            Debug.Log("name" + SelectedToken.name);
             imgDisplayToken.sprite = SelectedToken;
         }
         else
         {
             Debug.LogError("No tokens available!");
         }
+        PlayerPrefs.Save();
     }
 }

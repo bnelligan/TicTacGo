@@ -24,7 +24,10 @@ public class ConnectAndJoinRandom : Photon.MonoBehaviour
         PhotonNetwork.automaticallySyncScene = AutoSyncScene;
         PhotonNetwork.autoJoinLobby = false;    // we join randomly. always. no need to join a lobby to get the list of rooms.
     }
-
+    public void Connect()
+    {
+        PhotonNetwork.ConnectUsingSettings(Version + "." + SceneManagerHelper.ActiveSceneBuildIndex);
+    }
     public virtual void Update()
     {
         if (ConnectInUpdate && AutoConnect && !PhotonNetwork.connected)

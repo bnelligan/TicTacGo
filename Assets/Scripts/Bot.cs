@@ -195,7 +195,7 @@ public class CaptureFactor : MoveFactor
 {
     public CaptureFactor()
     {
-        Score = 50;
+        Score = 75;
     }
     public override void CalcFactor(TileState[,] board, ref Move move)
     {
@@ -212,7 +212,7 @@ public class BlockCaptureFactor : MoveFactor
 {
     public BlockCaptureFactor()
     {
-        Score = 25;
+        Score = 50;
     }
 
     public override void CalcFactor(TileState[,] board, ref Move move)
@@ -231,7 +231,7 @@ public class BlockLossFactor : MoveFactor
 {
     public BlockLossFactor()
     {
-        Score = 500;
+        Score = 750;
     }
     public override void CalcFactor(TileState[,] board, ref Move move)
     {
@@ -282,7 +282,7 @@ public class EdgeFactor : MoveFactor
 {
     public EdgeFactor()
     {
-        Score = 15;
+        Score = 20;
     }
 
     public override void CalcFactor(TileState[,] board, ref Move move)
@@ -298,7 +298,7 @@ public class EdgeFactor : MoveFactor
 public class AdjacencyFactor : MoveFactor
 {
     public int emptyScore = 7;
-    public int friendlyScore = 15;
+    public int friendlyScore = 12;
     public int enemyScore = 10;
 
     public AdjacencyFactor() { }
@@ -375,7 +375,7 @@ public class BlitzFactor : MoveFactor
 {
     public BlitzFactor()
     {
-        Score = 80;
+        Score = 40;
     }
     public override void CalcFactor(TileState[,] board, ref Move move)
     {

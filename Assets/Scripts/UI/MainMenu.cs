@@ -46,10 +46,6 @@ public class MainMenu : Photon.MonoBehaviour, IScreen {
 
     public void OnClick_Play()
     {
-        if(options.IsOnlineGame)
-        {
-            btnPlay.GetComponent<Animator>().SetBool("Searching", true);
-        }
         StartGame();
     }
 
@@ -101,23 +97,25 @@ public class MainMenu : Photon.MonoBehaviour, IScreen {
     private void StartGame()
     {
         SetPlayerTokens();
-        if(options.IsOnlineGame)
-            StartOnlineGame();
+        if (options.IsOnlineGame)
+        {
+            if (PhotonNetwork.connected == false)
+            {
+                btnPlay.GetComponent<Animator>().SetBool("Searching", true);
+                GetComponent<ConnectAndJoinRandom>().Connect();
+            }
+            else
+            {
+                PhotonNetwork.Disconnect();
+                btnPlay.GetComponent<Animator>().SetBool("Searching", false);
+            }
+        }
         else
-            StartLocalGame();
-        // Needs bot game check
+        {
+            SceneManager.LoadScene(GameScene);
+        }
     }
-
-    private void StartLocalGame()
-    {
-        SceneManager.LoadScene(GameScene);
-    }
-
-    private void StartOnlineGame()
-    {
-        GetComponent<ConnectAndJoinRandom>().AutoConnect = true;
-    }
-
+    
     private void SetBoardSelectSprite()
     {
         int size = options.BoardSize;
