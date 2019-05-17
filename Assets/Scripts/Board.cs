@@ -103,8 +103,6 @@ public class Board : MonoBehaviour {
     
     void CalculateTileSize()
     {
-        
-
         float sqScreenSize = Mathf.Min(Screen.width, Screen.height) * BoardScaleFactor;
         tileSize = sqScreenSize / size;
         Debug.Log("Tile Size: " + tileSize);
