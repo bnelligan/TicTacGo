@@ -441,6 +441,7 @@ public class GameManager : PunBehaviour {
         {
             IsInputEnabled = false;
             yield return new WaitForSeconds(tutorialMoveDelay);
+            HUD.HeaderText = "Capture!";
             Move firstMove = MoveHistory[0];
             Move botMove = MoveHistory[1];
             int dx = botMove.X - firstMove.X;
