@@ -9,24 +9,18 @@ public class BotManager : MonoBehaviour {
     private List<Bot> AvailableBots;
     private List<Bot> AliveBots;
     private GameOptions options;
-
+    
     
 
 	// Use this for initialization
-	void Start () {
+	void Awake () {
         AvailableBots = new List<Bot>();
         AliveBots = new List<Bot>();
         options = FindObjectOfType<GameOptions>();
-        if(options.IsSimulatedGame)
+        if((options.IsBotGame || options.IsTutorialGame) && P2Bot == null)
         {
-            P1Bot = gameObject.AddComponent<Bot>();
-            P1Bot.BotPlayer = Player.P1;
-            P2Bot = gameObject.AddComponent<Bot>();
-            P2Bot.BotPlayer = Player.P2;
-        }
-        else if(options.IsBotGame && P2Bot == null)
-        {
-            P2Bot = gameObject.AddComponent<Bot>();
+            GameObject botPrefab = Resources.Load<GameObject>($"Prefabs/Bots/{options.BotPrefabName}");
+            P2Bot = GameObject.Instantiate(botPrefab, transform).GetComponent<Bot>();
             P2Bot.BotPlayer = Player.P2;
         }
         
@@ -57,7 +51,7 @@ public class BotManager : MonoBehaviour {
     }
     public void NotifyTurn(Player activePlayer)
     {
-        if(options.IsSimulatedGame)
+        if(options.IsLocalGame)
         {
             if(activePlayer == Player.P1)
             {
@@ -68,7 +62,7 @@ public class BotManager : MonoBehaviour {
                 P2Bot.MakeMove();
             }
         }
-        else if(options.IsBotGame)
+        else if(options.IsBotGame || options.IsTutorialGame)
         {
             if(activePlayer == Player.P2)
             {

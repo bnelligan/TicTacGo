@@ -66,5 +66,6 @@ public class IntroBoard : MonoBehaviour
         glg.constraintCount = 3;
         glg.cellSize = new Vector2(tileSize, tileSize);
         glg.spacing = glg.cellSize / 16;
+        glg.padding.top = (int)(knownScreenHeight / 6);
     }
 }

@@ -20,8 +20,9 @@ public class Tile : MonoBehaviour {
 
     [SerializeField]
     private bool glowing = false;
+    private bool dimmed = false;
     private float gAmp = 0.15f;
-    private float gPeriod = 3;
+    private float gPeriod = 6;
     private float gStart = 0f;
     private float bRatio = 0.1843f;
     public bool IsVisible {
@@ -51,7 +52,6 @@ public class Tile : MonoBehaviour {
 
     private void Awake()
     {
-        originalAlpha = IsTile3D ? GetComponent<MeshRenderer>().material.color.a : GetComponent<Image>().color.a;
         Material oldMat = IsTile3D ? GetComponent<MeshRenderer>().material : GetComponent<Image>().material;
         Material newMat = new Material(oldMat);
         if (IsTile3D)
@@ -62,6 +62,7 @@ public class Tile : MonoBehaviour {
         {
             GetComponent<Image>().material = newMat;
         }
+        originalAlpha = IsTile3D ? GetComponent<MeshRenderer>().material.color.a : GetComponent<Image>().material.color.a;
         //StartGlow();
     }
     private void Update()
@@ -78,6 +79,7 @@ public class Tile : MonoBehaviour {
             tileColor.r = 1 - (gAmp * Mathf.Sin(t * gPeriod) + gAmp);
             tileColor.b = 1 - (gAmp * bRatio * Mathf.Sin(t * gPeriod) + gAmp * bRatio);
             tileColor.g = 1;
+            tileColor.a = GetComponent<Image>().material.color.a;
             if (IsTile3D)
             {
                 GetComponent<MeshRenderer>().material.color = tileColor;
@@ -93,6 +95,7 @@ public class Tile : MonoBehaviour {
             tileColor.r = 1;
             tileColor.b = 1;
             tileColor.g = 1;
+            tileColor.a = GetComponent<Image>().material.color.a;
             if (IsTile3D)
             {
                 GetComponent<MeshRenderer>().material.color = tileColor;
@@ -102,20 +105,66 @@ public class Tile : MonoBehaviour {
                 GetComponent<Image>().material.color = tileColor;
             }
         }
+        // Dimming
+        if(dimmed)
+        {
+            tileColor.a = dimAlpha * originalAlpha;
+            // Token
+            if (Token != null)
+            {
+                Color tokenColor = IsTile3D ? Token.GetComponent<MeshRenderer>().material.color : Token.GetComponent<Image>().material.color;
+                tokenColor.a = dimAlpha * originalAlpha;
+                if (IsTile3D)
+                {
+                    Token.GetComponent<MeshRenderer>().material.color = tokenColor;
+                }
+                else
+                {
+                    Token.GetComponent<Image>().material.color = tokenColor;
+                }
+            }
+        }
+        else
+        {
+            tileColor.a = originalAlpha;
+            // Token
+            if (Token != null)
+            {
+                Color tokenColor = IsTile3D ? Token.GetComponent<MeshRenderer>().material.color : Token.GetComponent<Image>().material.color;
+                tokenColor.a = originalAlpha;
+                if (IsTile3D)
+                {
+                    Token.GetComponent<MeshRenderer>().material.color = tokenColor;
+                }
+                else
+                {
+                    Token.GetComponent<Image>().material.color = tokenColor;
+                }
+            }
+        }
+        // Set color
+        if (IsTile3D)
+        {
+            GetComponent<MeshRenderer>().material.color = tileColor;
+        }
+        else
+        {
+            GetComponent<Image>().material.color = tileColor;
+        }
     }
     public void Dim()
     {
-        SetAlpha(dimAlpha*originalAlpha);
+        dimmed = true;
     }
     public void ResetAlpha()
     {
-        SetAlpha(originalAlpha);
+        dimmed = false;
     }
     public void SetAlpha(float a)
     {
         // Tile
         Color tileColor;
-        tileColor = IsTile3D ? GetComponent<MeshRenderer>().material.color : GetComponent<Image>().color;
+        tileColor = IsTile3D ? GetComponent<MeshRenderer>().material.color : GetComponent<Image>().material.color;
 
         tileColor.a = a;
         if(IsTile3D)
@@ -124,23 +173,10 @@ public class Tile : MonoBehaviour {
         }
         else
         {
-            GetComponent<Image>().color = tileColor;
+            GetComponent<Image>().material.color = tileColor;
         }
 
-        // Token
-        if (Token != null)
-        { 
-            Color tokenColor = IsTile3D ? Token.GetComponent<MeshRenderer>().material.color : Token.GetComponent<Image>().color;
-            tokenColor.a = a;
-            if (IsTile3D)
-            {
-                Token.GetComponent<MeshRenderer>().material.color = tokenColor;
-            }
-            else
-            {
-                Token.GetComponent<Image>().color = tokenColor;
-            }
-        }
+        
     }
 
     public void StartGlow()

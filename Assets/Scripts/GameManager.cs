@@ -5,13 +5,13 @@ using UnityEngine.SceneManagement;
 using Photon;
 
 public enum Player { NONE, P1, P2 };
-public enum GameMode { LOCAL, ONLINE,  BOT }
+public enum GameMode { LOCAL, ONLINE,  BOT, TUTORIAL }
 public class GameManager : PunBehaviour {
 
     public List<Move> MoveHistory; 
     // Private vars
     int turn;
-
+    const float tutorialMoveDelay = 1.5f;
 
     GameMode mode = GameMode.LOCAL;
     // Config
@@ -23,8 +23,9 @@ public class GameManager : PunBehaviour {
     public bool IsGameRunning { get; private set; }
     public bool IsOnlineGame { get { return mode == GameMode.ONLINE; } }
     public bool IsLocalGame { get { return mode == GameMode.LOCAL; } }
-    public bool IsBotGame { get { return mode == GameMode.BOT; } }
-    public bool IsSimulatedGame { get { return IsBotGame && options.IsSimulatedGame; } }
+    public bool IsBotGame { get { return mode == GameMode.BOT || mode == GameMode.TUTORIAL; } }
+    public bool IsTutorialGame { get { return mode == GameMode.TUTORIAL; } }
+    public bool IsSimulatedGame { get { return IsBotGame && options.IsLocalGame; } }
     public Board GameBoard { get { return board; } }
     public int BoardSize { get { return options.BoardSize; } }
     public GameHUD UI { get { return HUD; } }
@@ -33,9 +34,9 @@ public class GameManager : PunBehaviour {
         get {
             if (IsOnlineGame)
                 return PhotonNetwork.isMasterClient ? Player.P1 : Player.P2;
-            else if (IsBotGame && !options.IsSimulatedGame)
+            else if (IsBotGame && !options.IsLocalGame)
                 return Player.P1;
-            else if (IsBotGame && options.IsSimulatedGame)
+            else if (IsBotGame && options.IsLocalGame)
                 return Player.NONE;
             else
                 return ActivePlayer;
@@ -52,6 +53,7 @@ public class GameManager : PunBehaviour {
     public int LocalWins { get { return PlayerPrefs.GetInt("LocalWins"); } set { PlayerPrefs.SetInt("LocalWins", value); } }
     public int BotWins { get { return PlayerPrefs.GetInt("BotWins"); } set { PlayerPrefs.SetInt("BotWins", value); } }
     public int BotLosses { get { return PlayerPrefs.GetInt("BotLosses"); } set { PlayerPrefs.SetInt("BotLosses", value); } }
+    public Tile nextTutorialMove;
     // External refs
     Board board;
     [SerializeField]
@@ -121,19 +123,26 @@ public class GameManager : PunBehaviour {
         turn = 1;
         IsGameRunning = true;
         IsInputEnabled = true;
+        board.BuildBoard(BoardSize);
         
         if(IsBotGame)
         {
             botManager.StartGame();
         }
-        HUD.ShowCurrentTurn();
-        board.BuildBoard(BoardSize);
-        if (RematchFlag)
+        if(IsTutorialGame)
+        {
+            turn = 0;
+            SwitchTurns(Opponent);
+            RematchFlag = false;
+        }
+        else if (RematchFlag)
         {
             // Loser goes first in rematch
+            turn = 0;
             SwitchTurns(ActivePlayer);
             RematchFlag = false;
         }
+        HUD.ShowCurrentTurn();
     }
 
     public void StartGame(int size)
@@ -218,6 +227,17 @@ public class GameManager : PunBehaviour {
                 Debug.Log("Making Move!");
                 photonView.RPC("RPC_MakeMove", PhotonTargets.AllBuffered, x, y, ActivePlayer);
             }
+            else if(IsTutorialGame)
+            {
+                if(x == nextTutorialMove.X && y == nextTutorialMove.Y)
+                {
+                    MakeMove(x, y, ActivePlayer);
+                }
+                else
+                {
+                    Debug.Log($"Move ({x},{y}) does not match tutorial move of ({nextTutorialMove.X},{nextTutorialMove.Y}");
+                }
+            }
             else
             {
                 MakeMove(x, y, ActivePlayer);
@@ -252,6 +272,11 @@ public class GameManager : PunBehaviour {
             mode = GameMode.BOT;
             botManager = gameObject.AddComponent<BotManager>();
         }
+        else if(options.IsTutorialGame)
+        {
+            mode = GameMode.TUTORIAL;
+            botManager = gameObject.AddComponent<BotManager>();
+        }
         else
         {
             mode = GameMode.LOCAL;
@@ -260,6 +285,7 @@ public class GameManager : PunBehaviour {
         Debug.Log("IsBot: " + IsBotGame.ToString());
         Debug.Log("IsLocal: " + IsLocalGame.ToString());
         Debug.Log("IsSimulated: " + IsSimulatedGame.ToString());
+        Debug.Log("IsTutorial: " + IsTutorialGame.ToString());
     }
     private void HandleInput()
     {
@@ -380,9 +406,14 @@ public class GameManager : PunBehaviour {
             ActivePlayer = Player.P1;
         }
         // Notify bot manager
-        if(IsBotGame)
+        if (IsBotGame)
         {
             botManager.NotifyTurn(ActivePlayer);
+        }
+        // Set tutorial move
+        if (IsTutorialGame)
+        {
+            StartCoroutine(SetNextTutorialMove());
         }
         // Update the UI
         HUD.ShowCurrentTurn();
@@ -391,6 +422,33 @@ public class GameManager : PunBehaviour {
     {
         ActivePlayer = lastPlayer;
         SwitchTurns();
+    }
+    IEnumerator SetNextTutorialMove()
+    {
+        Debug.Log("Finding tutorial move for turn " + turn);
+        if(turn == 1)
+        {
+            IsInputEnabled = false;
+            yield return new WaitForSeconds(tutorialMoveDelay);
+            // Choose random edge space
+            List<int[]> edgeTiles = Board.FindEdges(board.boardState);
+            int[] moveCoords = edgeTiles[Random.Range(0, edgeTiles.Count)];
+            nextTutorialMove = board.board[moveCoords[0], moveCoords[1]];
+            nextTutorialMove.StartGlow();
+            IsInputEnabled = true;
+        }
+        else if(turn == 3)
+        {
+            IsInputEnabled = false;
+            yield return new WaitForSeconds(tutorialMoveDelay);
+            Move firstMove = MoveHistory[0];
+            Move botMove = MoveHistory[1];
+            int dx = botMove.X - firstMove.X;
+            int dy = botMove.Y - firstMove.Y;
+            nextTutorialMove = board.board[botMove.X + dx, botMove.Y + dy];
+            nextTutorialMove.StartGlow();
+            IsInputEnabled = true;
+        }
     }
     
     [PunRPC] void RPC_GameOver(Player winner, bool tie)
@@ -434,7 +492,7 @@ public class GameManager : PunBehaviour {
         {
             LocalWins++;
         }
-        else if(IsBotGame)
+        else if(IsBotGame && !IsTutorialGame)
         {
             BotWins++;
         }
@@ -446,7 +504,7 @@ public class GameManager : PunBehaviour {
         {
             OnlineLosses++;
         }
-        else if (IsBotGame)
+        else if (IsBotGame && !IsTutorialGame)
         {
             BotLosses++;
         }

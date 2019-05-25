@@ -7,7 +7,8 @@ using UnityEditor;
 
 public class MainMenu : Photon.MonoBehaviour, IScreen {
     GameOptions options;
-    IScreen optionsMenu;
+    [SerializeField] Canvas optionsMenu;
+    [SerializeField] Canvas introBoard;
     private string GameScene { get { return options.Start3D ? "Game_3D" : "Game"; } }
     [SerializeField]
     Button btnToggleBoard;
@@ -23,7 +24,6 @@ public class MainMenu : Photon.MonoBehaviour, IScreen {
 
     private void Start()
     {
-        optionsMenu = FindObjectOfType<OptionsMenu>();
         options = FindObjectOfType<GameOptions>();
         btnToggleBoard.onClick.AddListener(OnClick_ToggleBoard);
         btnToggleMode.onClick.AddListener(OnClick_ToggleMode);
@@ -46,7 +46,14 @@ public class MainMenu : Photon.MonoBehaviour, IScreen {
 
     public void OnClick_Play()
     {
-        StartGame();
+        if(introBoard.enabled == true)
+        {
+            ShowGameOptions();
+        }
+        else
+        {
+            StartGame();
+        }
     }
 
     public void OnClick_Exit()
@@ -63,8 +70,15 @@ public class MainMenu : Photon.MonoBehaviour, IScreen {
             size = 3;
         }
         options.BoardSize = size;
-
         SetBoardSelectSprite();
+    }
+
+    public void OnClick_StartTutorial()
+    {
+        options.BotPrefabName = "TutorialBot";
+        options.mode = GameMode.TUTORIAL;
+        options.BoardSize = 3;
+        StartGame();
     }
 
     public void OnClick_ToggleMode()
@@ -77,6 +91,7 @@ public class MainMenu : Photon.MonoBehaviour, IScreen {
         else if(mode == GameMode.ONLINE)
         {
             mode = GameMode.BOT;
+            options.BotPrefabName = "DefaultBot";
         }
         else if(mode == GameMode.BOT)
         {
@@ -90,8 +105,8 @@ public class MainMenu : Photon.MonoBehaviour, IScreen {
 
     private void ShowGameOptions()
     {
-        Hide();
-        optionsMenu.Show();
+        introBoard.enabled = false;
+        optionsMenu.enabled = true;
     }
 
     private void StartGame()
@@ -132,6 +147,11 @@ public class MainMenu : Photon.MonoBehaviour, IScreen {
 
     private void SetModeSprite()
     {
+        // Fix tutorial option if set
+        if (options.mode == GameMode.TUTORIAL)
+        {
+            options.mode = GameMode.BOT;
+        }
         GameMode mode = options.mode;
         Sprite DefaultSprite = Resources.Load<Sprite>($"Sprites/UI/ModeSelectButton_{mode}_Default");
         //Sprite SelectedSprite = Resources.Load<Sprite>($"Sprites/UI/ModeSelectButton_{mode}_Selected");

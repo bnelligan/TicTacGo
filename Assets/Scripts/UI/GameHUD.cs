@@ -6,15 +6,16 @@ using TMPro;
 
 
 public class GameHUD : MonoBehaviour {
-    public bool ChangeBackColor;
 
-    #region HUD Elements
+    public bool ChangeBackColor;
+    
     [SerializeField] GameObject BtnRematch;
     [SerializeField] GameObject BtnMenu;
-    #endregion
-
-    #region Element Accessors
-    #endregion
+    [SerializeField] TextMeshProUGUI TxtHeader;
+    [SerializeField] Image ImgToken1;
+    [SerializeField] Image ImgToken2;
+    
+    public string HeaderText { get { return TxtHeader.text; } set { TxtHeader.text = value; } }
 
     Camera cam;
     GameManager manager;
@@ -40,30 +41,54 @@ public class GameHUD : MonoBehaviour {
     }
     public void ShowCurrentTurn()
     {
-        
+        Player currentPlayer = manager.ActivePlayer;
+        Sprite currentToken = currentPlayer == Player.P1 ? manager.GameBoard.P1Token : manager.GameBoard.P2Token;
+        ImgToken1.sprite = currentToken;
+        ImgToken2.sprite = currentToken;
+        if (manager.IsOnlineGame || manager.IsBotGame)
+        {
+            if (currentPlayer == manager.LocalPlayer)
+            {
+                HeaderText = "Your Turn!";
+            }
+            else
+            {
+                HeaderText = "Thinking...";
+            }
+        }
+        else
+        {
+            HeaderText = "Your Turn!";
+        }
     }
     public void ShowTie()
     {
         BtnRematch.SetActive(true);
+        HeaderText = "Tie Game!";
+        ImgToken1.sprite = manager.GameBoard.P1Token;
+        ImgToken2.sprite = manager.GameBoard.P2Token;
     }
     public void ShowWinner(Player winningPlayer)
     {
-        //if(manager.IsOnlineGame || manager.IsBotGame)
-        //{
-        //    if(manager.LocalPlayer == winningPlayer)
-        //    {
-        //        HeaderText = "YOU WIN!";
-        //    }
-        //    else
-        //    {
-        //        HeaderText = "You Lost";
-        //    }
-        //}
-        //else
-        //{
-        //    HeaderText = winningPlayer.ToString() + " WINS!";
-        //}
+        if (manager.IsOnlineGame || manager.IsBotGame)
+        {
+            if (manager.LocalPlayer == winningPlayer)
+            {
+                HeaderText = "YOU WIN!";
+            }
+            else
+            {
+                HeaderText = "You Lose.";
+            }
+        }
+        else
+        {
+            HeaderText = "YOU WIN!";
+        }
         BtnRematch.SetActive(true);
+        Sprite currentToken = winningPlayer == Player.P1 ? manager.GameBoard.P1Token : manager.GameBoard.P2Token;
+        ImgToken1.sprite = currentToken;
+        ImgToken2.sprite = currentToken;
         //RematchText = "Rematch";
     }
     public void ShowRequestRematch()

@@ -57,6 +57,7 @@ MonoBehaviour:
   Y: 0
   State: 0
   Token: {fileID: 0}
+  glowing: 0
 --- !u!50 &8815889583535597567
 Rigidbody2D:
   serializedVersion: 4

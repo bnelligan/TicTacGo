@@ -27,6 +27,9 @@ public class Board : MonoBehaviour {
     
 
     public int Size { get { return size; } }
+    float knownScreenWidth = 0f;
+    float knownScreenHeight = 0f;
+    private bool HasNewScreenSize { get { return knownScreenHeight != Screen.height || knownScreenWidth != Screen.width; } }
 
     // Directional vectors
     static List<Vector2> directions = new List<Vector2> {
@@ -42,6 +45,14 @@ public class Board : MonoBehaviour {
     private void Awake  ()
     {
         IsBoard3D = tilePrefab.IsTile3D;
+    }
+    private void Update()
+    {
+        if (HasNewScreenSize)
+        {
+            CalculateTileSize();
+            SetGridParams();
+        }
     }
     public void BuildBoard()
     {
@@ -61,10 +72,7 @@ public class Board : MonoBehaviour {
         CalculateTileSize();
         if (IsBoard2D)
         {
-            GridLayoutGroup glg = GetComponent<GridLayoutGroup>();
-            glg.constraintCount = size;
-            glg.cellSize = new Vector2(tileSize, tileSize);
-            glg.spacing = glg.cellSize / 16;
+            SetGridParams();
         }
         GameManager mgr = FindObjectOfType<GameManager>();
 
@@ -103,9 +111,19 @@ public class Board : MonoBehaviour {
     
     void CalculateTileSize()
     {
-        float sqScreenSize = Mathf.Min(Screen.width, Screen.height) * BoardScaleFactor;
+        knownScreenHeight = Screen.height;
+        knownScreenWidth = Screen.width;
+        float sqScreenSize = Mathf.Min(knownScreenWidth, knownScreenHeight) * BoardScaleFactor;
         tileSize = sqScreenSize / size;
         Debug.Log("Tile Size: " + tileSize);
+    }
+    void SetGridParams()
+    {
+        GridLayoutGroup glg = GetComponent<GridLayoutGroup>();
+        glg.constraintCount = size;
+        glg.cellSize = new Vector2(tileSize, tileSize);
+        glg.spacing = glg.cellSize / 16;
+        glg.padding.top = (int)(knownScreenHeight / 6);
     }
     /// <summary>
     /// Animate the board build in a spiral pattern
@@ -290,6 +308,7 @@ public class Board : MonoBehaviour {
         token = Instantiate(tokenPrefab, target.transform);
         token.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, tileSize);
         token.GetComponent<RectTransform>().SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, tileSize);
+        token.GetComponent<Image>().material = new Material(token.GetComponent<Image>().material); // Workaround for all UI elements using the same material
         if (player == Player.P1)
         {
             token.GetComponent<Image>().sprite = P1Token;
@@ -301,6 +320,7 @@ public class Board : MonoBehaviour {
         //token.transform.position += new Vector3(0, 0, -1);
         target.State = PlayerToState(player);
         target.Token = token.gameObject;
+        target.StopGlow();
         boardState[target.X, target.Y] = target.State;
     }
     
@@ -796,6 +816,23 @@ public class Board : MonoBehaviour {
         };
     }
 
+    public static List<int[]> FindEdges(TileState[,] boardState)
+    {
+        int s = boardState.GetLength(0);
+        List<int[]> edgeTiles = new List<int[]>();
+        for(int i = 0; i < s; i++)
+        {
+            for(int j = 0; j < s; j++)
+            {
+                if (IsEdgeTile(boardState, i, j))
+                {
+                    edgeTiles.Add(new int[] { i, j });
+                }
+            }
+        }
+        return edgeTiles;
+    }
+
     public static TileState[,] CloneBoardState(TileState[,] boardState)
     {
         TileState[,] clonedBoard = new TileState[boardState.GetLength(0), boardState.GetLength(1)];
@@ -808,6 +845,7 @@ public class Board : MonoBehaviour {
         }
         return clonedBoard;
     }
+
     public static bool IsMoveBlitz(TileState[,] boardState, Move move)
     {
         // blitz move is when the opponent tokens are split in the middle, with nothing but white space between
@@ -928,5 +966,6 @@ public class Board : MonoBehaviour {
     {
         return CompareTileState(board, x, y, TileState.EMPTY);
     }
+    
     #endregion
 }
