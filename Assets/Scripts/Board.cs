@@ -19,6 +19,8 @@ public class Board : MonoBehaviour {
     public bool IsBoard3D { get; private set; } = false;
     public bool IsBoard2D { get { return !IsBoard3D; } }
     public float BoardScaleFactor = 0.8f;
+    public float PortraitScaleFactor = 0.9f;
+    public float LandscapeScaleFactor = 0.7f;
     // Tokens
     [SerializeField] GameObject tokenPrefab;
 
@@ -113,6 +115,15 @@ public class Board : MonoBehaviour {
     {
         knownScreenHeight = Screen.height;
         knownScreenWidth = Screen.width;
+        bool isPortrait = knownScreenHeight > knownScreenWidth;
+        if (isPortrait)
+        {
+            BoardScaleFactor = PortraitScaleFactor;
+        }
+        else
+        {
+            BoardScaleFactor = LandscapeScaleFactor;
+        }
         float sqScreenSize = Mathf.Min(knownScreenWidth, knownScreenHeight) * BoardScaleFactor;
         tileSize = sqScreenSize / size;
         Debug.Log("Tile Size: " + tileSize);

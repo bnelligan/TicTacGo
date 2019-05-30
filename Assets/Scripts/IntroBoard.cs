@@ -62,10 +62,16 @@ public class IntroBoard : MonoBehaviour
     }
     private void SetGridParams()
     {
+        bool isPortrait = knownScreenHeight > knownScreenWidth;
+        int paddingFactor = 10;
+        if(isPortrait)
+        {
+            paddingFactor = 4;
+        }
         GridLayoutGroup glg = GetComponent<GridLayoutGroup>();
         glg.constraintCount = 3;
         glg.cellSize = new Vector2(tileSize, tileSize);
         glg.spacing = glg.cellSize / 16;
-        glg.padding.top = (int)(knownScreenHeight / 6);
+        glg.padding.top = (int)(knownScreenHeight / paddingFactor);
     }
 }
