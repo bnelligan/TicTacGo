@@ -1,9 +1,7 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using UnityEditor;
 
 public class MainMenu : Photon.MonoBehaviour, IScreen {
     GameOptions options;
@@ -11,11 +9,13 @@ public class MainMenu : Photon.MonoBehaviour, IScreen {
     [SerializeField] Canvas introBoard;
     private string GameScene { get { return options.Start3D ? "Game_3D" : "Game"; } }
     [SerializeField]
-    Button btnToggleBoard;
+    Button btnPlayOnline;
     [SerializeField]
-    Button btnToggleMode;
+    Button btnPlayLocal;
     [SerializeField]
-    Button btnPlay;
+    Button btnPlayBot;
+    [SerializeField]
+    Button btnStartGame;
 
     [SerializeField]
     Image P1TokenSelect;
@@ -25,11 +25,12 @@ public class MainMenu : Photon.MonoBehaviour, IScreen {
     private void Start()
     {
         options = FindObjectOfType<GameOptions>();
-        btnToggleBoard.onClick.AddListener(OnClick_ToggleBoard);
-        btnToggleMode.onClick.AddListener(OnClick_ToggleMode);
-        btnPlay.onClick.AddListener(OnClick_Play);
-        SetBoardSelectSprite();
-        SetModeSprite();
+        btnPlayOnline.onClick.AddListener(OnClick_PlayOnline);
+        btnPlayLocal.onClick.AddListener(OnClick_PlayLocal);
+        btnPlayBot.onClick.AddListener(OnClick_PlayBot);
+        btnStartGame.onClick.AddListener(OnClick_StartGame);
+        // SetBoardSelectSprite();
+        // SetModeSprite();
     }
 
     public void Show()
@@ -44,16 +45,23 @@ public class MainMenu : Photon.MonoBehaviour, IScreen {
 
 #region OnClick Events
 
-    public void OnClick_Play()
+    public void OnClick_StartGame()
     {
-        if(introBoard.enabled == true)
-        {
-            ShowGameOptions();
-        }
-        else
-        {
-            StartGame();
-        }
+        StartGame();
+    }
+    public void OnClick_PlayOnline()
+    {
+        ShowGameOptions(GameMode.ONLINE);
+    }
+
+    public void OnClick_PlayLocal()
+    {
+        ShowGameOptions(GameMode.LOCAL);
+    }
+
+    public void OnClick_PlayBot()
+    {
+        ShowGameOptions(GameMode.BOT);
     }
 
     public void OnClick_Exit()
@@ -73,6 +81,7 @@ public class MainMenu : Photon.MonoBehaviour, IScreen {
         SetBoardSelectSprite();
     }
 
+
     public void OnClick_StartTutorial()
     {
         options.BotPrefabName = "TutorialBot";
@@ -81,32 +90,43 @@ public class MainMenu : Photon.MonoBehaviour, IScreen {
         StartGame();
     }
 
-    public void OnClick_ToggleMode()
-    {
-        GameMode mode = options.mode;
-        if(mode == GameMode.LOCAL)
-        {
-            mode = GameMode.ONLINE;
-        }
-        else if(mode == GameMode.ONLINE)
-        {
-            mode = GameMode.BOT;
-            options.BotPrefabName = "DefaultBot";
-        }
-        else if(mode == GameMode.BOT)
-        {
-            mode = GameMode.LOCAL;
-        }
-        options.mode = mode;
-        SetModeSprite();
-    }
+    //public void OnClick_ToggleMode()
+    //{
+    //    GameMode mode = options.mode;
+    //    if(mode == GameMode.LOCAL)
+    //    {
+    //        mode = GameMode.ONLINE;
+    //    }
+    //    else if(mode == GameMode.ONLINE)
+    //    {
+    //        mode = GameMode.BOT;
+    //        options.BotPrefabName = "DefaultBot";
+    //    }
+    //    else if(mode == GameMode.BOT)
+    //    {
+    //        mode = GameMode.LOCAL;
+    //    }
+    //    options.mode = mode;
+    //    SetModeSprite();
+    //}
     
 #endregion
 
-    private void ShowGameOptions()
+    private void ShowGameOptions(GameMode mode)
     {
         introBoard.enabled = false;
+        Hide();
         optionsMenu.enabled = true;
+        options.mode = mode;
+
+        if(mode == GameMode.ONLINE)
+        {
+            // Enable only local token select
+        }
+        else if (mode == GameMode.LOCAL || mode == GameMode.BOT)
+        {
+            // Enable both token selects, maybe only one for bots
+        }
     }
 
     private void StartGame()
@@ -116,13 +136,13 @@ public class MainMenu : Photon.MonoBehaviour, IScreen {
         {
             if (PhotonNetwork.connected == false)
             {
-                btnPlay.GetComponent<Animator>().SetBool("Searching", true);
+                btnStartGame.GetComponent<Animator>().SetBool("Searching", true);
                 GetComponent<ConnectAndJoinRandom>().Connect();
             }
             else
             {
                 PhotonNetwork.Disconnect();
-                btnPlay.GetComponent<Animator>().SetBool("Searching", false);
+                btnStartGame.GetComponent<Animator>().SetBool("Searching", false);
             }
         }
         else
@@ -137,32 +157,32 @@ public class MainMenu : Photon.MonoBehaviour, IScreen {
         Sprite DefaultSprite = Resources.Load<Sprite>($"Sprites/UI/BoardSelectButton_{size}x{size}_Default");
         //Sprite SelectedSprite = Resources.Load<Sprite>($"Sprites/UI/BoardSelectButton_{size}x{size}_Selected");
         Sprite PressedSprite = Resources.Load<Sprite>($"Sprites/UI/BoardSelectButton_{size}x{size}_Pressed");
-        btnToggleBoard.image.sprite = DefaultSprite;
+        btnPlayOnline.image.sprite = DefaultSprite;
 
-        SpriteState ss = btnToggleBoard.spriteState;
+        SpriteState ss = btnPlayOnline.spriteState;
         //ss.highlightedSprite = SelectedSprite;
         ss.pressedSprite = PressedSprite;
-        btnToggleBoard.spriteState = ss;
+        btnPlayOnline.spriteState = ss;
     }
 
-    private void SetModeSprite()
-    {
-        // Fix tutorial option if set
-        if (options.mode == GameMode.TUTORIAL)
-        {
-            options.mode = GameMode.BOT;
-        }
-        GameMode mode = options.mode;
-        Sprite DefaultSprite = Resources.Load<Sprite>($"Sprites/UI/ModeSelectButton_{mode}_Default");
-        //Sprite SelectedSprite = Resources.Load<Sprite>($"Sprites/UI/ModeSelectButton_{mode}_Selected");
-        Sprite PressedSprite = Resources.Load<Sprite>($"Sprites/UI/ModeSelectButton_{mode}_Pressed");
-        btnToggleMode.image.sprite = DefaultSprite;
+    //private void SetModeSprite()
+    //{
+    //    // Fix tutorial option if set
+    //    if (options.mode == GameMode.TUTORIAL)
+    //    {
+    //        options.mode = GameMode.BOT;
+    //    }
+    //    GameMode mode = options.mode;
+    //    Sprite DefaultSprite = Resources.Load<Sprite>($"Sprites/UI/ModeSelectButton_{mode}_Default");
+    //    //Sprite SelectedSprite = Resources.Load<Sprite>($"Sprites/UI/ModeSelectButton_{mode}_Selected");
+    //    Sprite PressedSprite = Resources.Load<Sprite>($"Sprites/UI/ModeSelectButton_{mode}_Pressed");
+    //    btnToggleMode.image.sprite = DefaultSprite;
 
-        SpriteState ss = btnToggleMode.spriteState;
-        //ss.highlightedSprite = SelectedSprite;
-        ss.pressedSprite = PressedSprite;
-        btnToggleMode.spriteState = ss;
-    }
+    //    SpriteState ss = btnToggleMode.spriteState;
+    //    //ss.highlightedSprite = SelectedSprite;
+    //    ss.pressedSprite = PressedSprite;
+    //    btnToggleMode.spriteState = ss;
+    //}
 
     private void SetPlayerTokens()
     {
